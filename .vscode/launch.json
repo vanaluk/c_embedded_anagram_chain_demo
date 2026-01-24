@@ -52,12 +52,12 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/anagram_chain_baremetal.elf",
             "args": [],
-            "stopAtEntry": true,
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/arm-none-eabi-gdb",
+            "miDebuggerPath": "/usr/bin/gdb-multiarch",
             "miDebuggerServerAddress": "localhost:1234",
             "setupCommands": [
                 {
@@ -66,13 +66,25 @@
                     "ignoreFailures": true
                 },
                 {
-                    "description": "Set architecture to ARM",
-                    "text": "set architecture arm",
+                    "description": "Set remote target",
+                    "text": "set remotetimeout 10",
+                    "ignoreFailures": true
+                }
+            ],
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Set breakpoint at main",
+                    "text": "-break-insert main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Continue to main",
+                    "text": "-exec-continue",
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "Build ARM Bare-metal",
-            "serverLaunchTimeout": 5000,
+            "preLaunchTask": "QEMU Debug Bare-metal",
+            "serverLaunchTimeout": 10000,
             "filterStdout": true,
             "filterStderr": true
         },
@@ -82,12 +94,12 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/anagram_chain_freertos.elf",
             "args": [],
-            "stopAtEntry": true,
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/arm-none-eabi-gdb",
+            "miDebuggerPath": "/usr/bin/gdb-multiarch",
             "miDebuggerServerAddress": "localhost:1234",
             "setupCommands": [
                 {
@@ -96,13 +108,25 @@
                     "ignoreFailures": true
                 },
                 {
-                    "description": "Set architecture to ARM",
-                    "text": "set architecture arm",
+                    "description": "Set remote target",
+                    "text": "set remotetimeout 10",
+                    "ignoreFailures": true
+                }
+            ],
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Set breakpoint at main",
+                    "text": "-break-insert main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Continue to main",
+                    "text": "-exec-continue",
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "Build ARM FreeRTOS",
-            "serverLaunchTimeout": 5000,
+            "preLaunchTask": "QEMU Debug FreeRTOS",
+            "serverLaunchTimeout": 10000,
             "filterStdout": true,
             "filterStderr": true
         }

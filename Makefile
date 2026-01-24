@@ -41,9 +41,15 @@ CFLAGS = -Wall -Wextra -std=c11 -O2 $(INCLUDES)
 CFLAGS_DEBUG = -Wall -Wextra -std=c11 -g -O0 -DDEBUG $(INCLUDES)
 
 # ARM bare-metal flags
-CFLAGS_ARM_BAREMETAL = -Wall -Wextra -std=c11 -O2 \
+CFLAGS_ARM_BAREMETAL = -Wall -Wextra -std=c11 -O2 -g \
     -mcpu=cortex-m3 -mthumb -mfloat-abi=soft \
     -ffunction-sections -fdata-sections \
+    -specs=nano.specs -specs=nosys.specs \
+    $(INCLUDES_ARM)
+
+# ARM bare-metal debug flags
+CFLAGS_ARM_DEBUG = -Wall -Wextra -std=c11 -O0 -g3 -DDEBUG \
+    -mcpu=cortex-m3 -mthumb -mfloat-abi=soft \
     -specs=nano.specs -specs=nosys.specs \
     $(INCLUDES_ARM)
 
@@ -267,6 +273,18 @@ docker-run-test-freertos:
 # Run Targets (local QEMU)
 # ==============================================================================
 
+.PHONY: debug-baremetal
+debug-baremetal: $(TARGET_ARM_ELF)
+	@echo "Starting QEMU with GDB server on port 1234..."
+	@echo "Connect with: arm-none-eabi-gdb -ex 'target remote :1234' $(TARGET_ARM_ELF)"
+	qemu-system-arm -M lm3s6965evb -nographic -S -gdb tcp::1234 -kernel $(TARGET_ARM_ELF)
+
+.PHONY: debug-freertos
+debug-freertos: $(TARGET_FREERTOS_ELF)
+	@echo "Starting QEMU with GDB server on port 1234..."
+	@echo "Connect with: arm-none-eabi-gdb -ex 'target remote :1234' $(TARGET_FREERTOS_ELF)"
+	qemu-system-arm -M lm3s6965evb -nographic -S -gdb tcp::1234 -kernel $(TARGET_FREERTOS_ELF)
+
 .PHONY: run-baremetal
 run-baremetal: $(TARGET_ARM_ELF)
 	qemu-system-arm -M lm3s6965evb -nographic -kernel $(TARGET_ARM_ELF)
@@ -315,6 +333,8 @@ help:
 	@echo "  Run locally:"
 	@echo "    run-baremetal          - Run bare-metal in QEMU"
 	@echo "    run-freertos           - Run FreeRTOS in QEMU"
+	@echo "    debug-baremetal        - Start QEMU+GDB server for bare-metal"
+	@echo "    debug-freertos         - Start QEMU+GDB server for FreeRTOS"
 	@echo ""
 	@echo "  Docker:"
 	@echo "    docker-build           - Build Docker image (PC)"

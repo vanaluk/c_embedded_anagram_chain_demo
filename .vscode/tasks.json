@@ -103,6 +103,56 @@
             "dependsOn": "Build ARM FreeRTOS"
         },
         {
+            "label": "QEMU Debug Bare-metal",
+            "type": "shell",
+            "command": "qemu-system-arm -M lm3s6965evb -nographic -S -gdb tcp::1234 -kernel ${workspaceFolder}/bin/anagram_chain_baremetal.elf",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "Timer with period",
+                    "endsPattern": "Timer with period"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "dependsOn": "Build ARM Bare-metal"
+        },
+        {
+            "label": "QEMU Debug FreeRTOS",
+            "type": "shell",
+            "command": "qemu-system-arm -M lm3s6965evb -nographic -S -gdb tcp::1234 -kernel ${workspaceFolder}/bin/anagram_chain_freertos.elf",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "Timer with period",
+                    "endsPattern": "Timer with period"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "dependsOn": "Build ARM FreeRTOS"
+        },
+        {
             "label": "Clean",
             "type": "shell",
             "command": "make",
