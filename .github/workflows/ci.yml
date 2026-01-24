@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # ===========================================================================
+  # Native Build and Test
+  # ===========================================================================
+  build-native:
+    runs-on: ubuntu-22.04
+    name: Build & Test (Native x86_64)
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Build native binary
+      run: make
+
+    - name: Run unit tests
+      run: make test
+
+    - name: Run integration test
+      run: |
+        ./bin/anagram_chain tests/data/example.txt abck
+
+    - name: Upload native binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: anagram_chain-linux-x64
+        path: bin/anagram_chain
+
+  # ===========================================================================
+  # ARM Cross-Compilation
+  # ===========================================================================
+  build-arm:
+    runs-on: ubuntu-22.04
+    name: Build (ARM Cross-Compile)
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install ARM cross-compiler and QEMU
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-arm-linux-gnueabihf qemu-user
+
+    - name: Build ARM binary
+      run: make arm
+
+    - name: Test ARM binary with QEMU
+      run: |
+        qemu-arm -L /usr/arm-linux-gnueabihf ./bin/anagram_chain_arm tests/data/example.txt abck
+
+    - name: Upload ARM binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: anagram_chain-linux-arm
+        path: bin/anagram_chain_arm
+
+  # ===========================================================================
+  # Docker Build
+  # ===========================================================================
+  docker-build:
+    runs-on: ubuntu-22.04
+    name: Docker Build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: docker build -t anagram-chain -f docker/Dockerfile .
+
+    - name: Test in Docker container
+      run: |
+        docker run --rm anagram-chain ./bin/anagram_chain /app/tests/data/example.txt abck
+
+  # ===========================================================================
+  # Code Quality
+  # ===========================================================================
+  lint:
+    runs-on: ubuntu-22.04
+    name: Code Quality Check
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
+
+    - name: Check formatting
+      run: |
+        clang-format --dry-run --Werror src/*.c tests/*.c || echo "Formatting issues found (non-blocking)"

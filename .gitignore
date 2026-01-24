@@ -1,0 +1,21 @@
+# Build outputs
+build/
+bin/
+*.o
+*.a
+*.so
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug files
+*.dSYM/
+core
+core.*
+
+# Test outputs
+tests/data/*.generated.txt
+
+# Docker
+.docker/
