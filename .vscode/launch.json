@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Anagram Chain",
+            "name": "Debug PC",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/anagram_chain_debug",
@@ -22,11 +22,11 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build Debug",
+            "preLaunchTask": "Build PC Debug",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
-            "name": "Debug Current Test",
+            "name": "Debug Tests",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test_anagram",
@@ -45,6 +45,90 @@
             ],
             "preLaunchTask": "Build Tests",
             "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug ARM Bare-metal (QEMU GDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/anagram_chain_baremetal.elf",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb-multiarch",
+            "miDebuggerServerAddress": "localhost:1234",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set remote target",
+                    "text": "set remotetimeout 10",
+                    "ignoreFailures": true
+                }
+            ],
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Set breakpoint at main",
+                    "text": "-break-insert main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Continue to main",
+                    "text": "-exec-continue",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "QEMU Debug Bare-metal",
+            "serverLaunchTimeout": 10000,
+            "filterStdout": true,
+            "filterStderr": true
+        },
+        {
+            "name": "Debug ARM FreeRTOS (QEMU GDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/anagram_chain_freertos.elf",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb-multiarch",
+            "miDebuggerServerAddress": "localhost:1234",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set remote target",
+                    "text": "set remotetimeout 10",
+                    "ignoreFailures": true
+                }
+            ],
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Set breakpoint at main",
+                    "text": "-break-insert main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Continue to main",
+                    "text": "-exec-continue",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "QEMU Debug FreeRTOS",
+            "serverLaunchTimeout": 10000,
+            "filterStdout": true,
+            "filterStderr": true
         }
     ]
 }

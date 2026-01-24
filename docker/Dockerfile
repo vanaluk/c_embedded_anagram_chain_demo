@@ -1,9 +1,10 @@
 # Multi-stage Dockerfile for Anagram Chain Finder
 #
 # Stages:
-#   builder     - Build environment with compilers
-#   runtime     - Minimal runtime for native binary
-#   arm-runtime - Runtime with QEMU for ARM binary
+#   builder   - Build environment with compilers
+#   runtime   - Minimal runtime for PC binary
+#   baremetal - ARM Cortex-M3 bare-metal with QEMU system emulation
+#   freertos  - ARM Cortex-M3 with FreeRTOS and QEMU system emulation
 
 # ==============================================================================
 # Stage 1: Builder
@@ -13,11 +14,13 @@ FROM ubuntu:22.04 AS builder
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools
+# Install build tools (including ARM bare-metal toolchain)
 RUN apt-get update && apt-get install -y \
     build-essential \
-    gcc-arm-linux-gnueabihf \
+    gcc-arm-none-eabi \
+    libnewlib-arm-none-eabi \
     make \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -25,17 +28,35 @@ WORKDIR /app
 
 # Copy source files
 COPY src/ ./src/
+COPY arm/ ./arm/
 COPY tests/ ./tests/
 COPY Makefile ./
 
-# Build native binary
+# Download FreeRTOS Kernel (minimal clone)
+RUN git clone --depth 1 --branch V11.1.0 \
+    https://github.com/FreeRTOS/FreeRTOS-Kernel.git \
+    arm/freertos/FreeRTOS-Kernel
+
+# Build PC native binary
 RUN make clean 2>/dev/null || true && make
 
-# Build ARM binary
-RUN make arm
+# Build ARM bare-metal binary
+RUN make arm-baremetal
+
+# Build ARM FreeRTOS binary
+RUN make arm-freertos
+
+# Build PC tests
+RUN make build/test_pc || true
+
+# Build ARM bare-metal tests
+RUN make bin/test_baremetal.elf
+
+# Build ARM FreeRTOS tests
+RUN make bin/test_freertos.elf
 
 # ==============================================================================
-# Stage 2: Native Runtime
+# Stage 2: PC Runtime
 # ==============================================================================
 FROM ubuntu:22.04 AS runtime
 
@@ -50,22 +71,71 @@ ENTRYPOINT ["./bin/anagram_chain"]
 CMD ["--help"]
 
 # ==============================================================================
-# Stage 3: ARM Runtime with QEMU
+# Stage 3: ARM Bare-metal with QEMU System Emulation
 # ==============================================================================
-FROM ubuntu:22.04 AS arm-runtime
+FROM ubuntu:22.04 AS baremetal
 
-# Install QEMU user-mode emulation
+# Install QEMU system emulation for ARM
 RUN apt-get update && apt-get install -y \
-    qemu-user \
-    libc6-arm64-cross \
+    qemu-system-arm \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy ARM binary and test data from builder
-COPY --from=builder /app/bin/anagram_chain_arm ./bin/
-COPY --from=builder /app/tests/data/ ./tests/data/
+# Copy bare-metal ELF binary from builder
+COPY --from=builder /app/bin/anagram_chain_baremetal.elf ./bin/
 
-# Note: ARM binary is statically linked, no need for ARM libraries
-ENTRYPOINT ["qemu-arm", "./bin/anagram_chain_arm"]
-CMD ["--help"]
+# Run in QEMU lm3s6965evb machine
+# -nographic: no GUI, serial output to stdout
+# Use Ctrl+A X to exit QEMU
+ENTRYPOINT ["qemu-system-arm", "-M", "lm3s6965evb", "-nographic", "-kernel", "./bin/anagram_chain_baremetal.elf"]
+
+# ==============================================================================
+# Stage 4: ARM FreeRTOS with QEMU System Emulation
+# ==============================================================================
+FROM ubuntu:22.04 AS freertos
+
+# Install QEMU system emulation for ARM
+RUN apt-get update && apt-get install -y \
+    qemu-system-arm \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy FreeRTOS ELF binary from builder
+COPY --from=builder /app/bin/anagram_chain_freertos.elf ./bin/
+
+# Run in QEMU lm3s6965evb machine
+# -nographic: no GUI, serial output to stdout
+# Use Ctrl+A X to exit QEMU
+ENTRYPOINT ["qemu-system-arm", "-M", "lm3s6965evb", "-nographic", "-kernel", "./bin/anagram_chain_freertos.elf"]
+
+# ==============================================================================
+# Stage 5: ARM Bare-metal Tests with QEMU
+# ==============================================================================
+FROM ubuntu:22.04 AS test-baremetal
+
+RUN apt-get update && apt-get install -y \
+    qemu-system-arm \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app/bin/test_baremetal.elf ./bin/
+
+ENTRYPOINT ["qemu-system-arm", "-M", "lm3s6965evb", "-nographic", "-kernel", "./bin/test_baremetal.elf"]
+
+# ==============================================================================
+# Stage 6: ARM FreeRTOS Tests with QEMU
+# ==============================================================================
+FROM ubuntu:22.04 AS test-freertos
+
+RUN apt-get update && apt-get install -y \
+    qemu-system-arm \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app/bin/test_freertos.elf ./bin/
+
+ENTRYPOINT ["qemu-system-arm", "-M", "lm3s6965evb", "-nographic", "-kernel", "./bin/test_freertos.elf"]
