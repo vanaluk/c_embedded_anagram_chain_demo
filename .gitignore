@@ -19,3 +19,6 @@ tests/data/*.generated.txt
 
 # Docker
 .docker/
+
+# Temporary files
+tmp/
