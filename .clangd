@@ -1,32 +1,13 @@
-# Clangd configuration for Anagram Chain Finder
-# Language server settings for IDE integration
-
 CompileFlags:
   Add:
+    - -xc
+    - -Isrc/include
+    - -Iarm
+    - -Itests
     - -std=c11
     - -Wall
     - -Wextra
-    - -Isrc
   Remove:
-    - -W*
-
-Diagnostics:
-  ClangTidy:
-    Add:
-      - bugprone-*
-      - performance-*
-      - readability-identifier-naming
-      - misc-unused-parameters
-    Remove:
-      - bugprone-easily-swappable-parameters
-      - readability-magic-numbers
-
-  UnusedIncludes: Strict
-
-InlayHints:
-  Enabled: true
-  ParameterNames: true
-  DeducedTypes: true
-
-Hover:
-  ShowAKA: true
+    - -std=c++*
+    - -x
+    - objective-c++

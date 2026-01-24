@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build",
+            "label": "Build PC",
             "type": "shell",
             "command": "make",
             "args": [],
@@ -17,7 +17,7 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build Debug",
+            "label": "Build PC Debug",
             "type": "shell",
             "command": "make",
             "args": ["debug"],
@@ -29,10 +29,22 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build ARM",
+            "label": "Build ARM Bare-metal",
             "type": "shell",
             "command": "make",
-            "args": ["arm"],
+            "args": ["arm-baremetal"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build ARM FreeRTOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["arm-freertos"],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -44,7 +56,7 @@
             "label": "Build Tests",
             "type": "shell",
             "command": "make",
-            "args": ["$(BUILD_DIR)/test_anagram"],
+            "args": ["build/test_anagram"],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -63,6 +75,32 @@
                 "panel": "shared"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Run ARM Bare-metal (QEMU)",
+            "type": "shell",
+            "command": "make",
+            "args": ["run-baremetal"],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [],
+            "dependsOn": "Build ARM Bare-metal"
+        },
+        {
+            "label": "Run ARM FreeRTOS (QEMU)",
+            "type": "shell",
+            "command": "make",
+            "args": ["run-freertos"],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [],
+            "dependsOn": "Build ARM FreeRTOS"
         },
         {
             "label": "Clean",
@@ -84,6 +122,17 @@
             "group": "build",
             "presentation": {
                 "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Docker Build All",
+            "type": "shell",
+            "command": "make docker-build && make docker-build-baremetal && make docker-build-freertos",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
                 "panel": "shared"
             },
             "problemMatcher": []

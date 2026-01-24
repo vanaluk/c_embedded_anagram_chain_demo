@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Anagram Chain",
+            "name": "Debug PC",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/anagram_chain_debug",
@@ -22,11 +22,11 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build Debug",
+            "preLaunchTask": "Build PC Debug",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
-            "name": "Debug Current Test",
+            "name": "Debug Tests",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/test_anagram",
@@ -45,6 +45,66 @@
             ],
             "preLaunchTask": "Build Tests",
             "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug ARM Bare-metal (QEMU GDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/anagram_chain_baremetal.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/arm-none-eabi-gdb",
+            "miDebuggerServerAddress": "localhost:1234",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set architecture to ARM",
+                    "text": "set architecture arm",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "Build ARM Bare-metal",
+            "serverLaunchTimeout": 5000,
+            "filterStdout": true,
+            "filterStderr": true
+        },
+        {
+            "name": "Debug ARM FreeRTOS (QEMU GDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/anagram_chain_freertos.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/arm-none-eabi-gdb",
+            "miDebuggerServerAddress": "localhost:1234",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set architecture to ARM",
+                    "text": "set architecture arm",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "Build ARM FreeRTOS",
+            "serverLaunchTimeout": 5000,
+            "filterStdout": true,
+            "filterStderr": true
         }
     ]
 }

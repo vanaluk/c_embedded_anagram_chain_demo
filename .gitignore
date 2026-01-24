@@ -22,3 +22,6 @@ tests/data/*.generated.txt
 
 # Temporary files
 tmp/
+
+# Cache files
+.cache/
