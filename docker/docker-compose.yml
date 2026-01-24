@@ -1,0 +1,41 @@
+# Docker Compose for Anagram Chain Finder
+#
+# Services:
+#   build   - Build both native and ARM binaries
+#   native  - Run native binary
+#   arm     - Run ARM binary via QEMU
+
+version: '3.8'
+
+services:
+  # Build service
+  build:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    volumes:
+      - ../bin:/app/bin
+    command: make
+
+  # Native runtime
+  native:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runtime
+    volumes:
+      - ../tests/data:/app/tests/data:ro
+    # Override entrypoint via command line:
+    # docker-compose run native ./bin/anagram_chain tests/data/example.txt abck
+
+  # ARM runtime with QEMU
+  arm:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: arm-runtime
+    volumes:
+      - ../tests/data:/app/tests/data:ro
+    # Override entrypoint via command line:
+    # docker-compose run arm ./bin/anagram_chain_arm tests/data/example.txt abck
