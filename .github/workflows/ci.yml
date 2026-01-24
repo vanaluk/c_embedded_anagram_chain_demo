@@ -37,11 +37,11 @@ jobs:
         path: bin/anagram_chain
 
   # ===========================================================================
-  # ARM Bare-metal Build
+  # ARM Bare-metal Build and Test
   # ===========================================================================
   build-arm-baremetal:
     runs-on: ubuntu-22.04
-    name: Build (ARM Bare-metal)
+    name: Build & Test (ARM Bare-metal)
 
     steps:
     - name: Checkout code
@@ -55,7 +55,14 @@ jobs:
     - name: Build ARM bare-metal binary
       run: make arm-baremetal
 
-    - name: Test ARM binary with QEMU (timeout after 5s)
+    - name: Build ARM bare-metal tests
+      run: make bin/test_baremetal.elf
+
+    - name: Run ARM bare-metal tests in QEMU
+      run: |
+        timeout 10 qemu-system-arm -M lm3s6965evb -nographic -kernel bin/test_baremetal.elf || true
+
+    - name: Run ARM binary in QEMU (demo)
       run: |
         timeout 5 qemu-system-arm -M lm3s6965evb -nographic -kernel bin/anagram_chain_baremetal.elf || true
 
@@ -66,20 +73,27 @@ jobs:
         path: bin/anagram_chain_baremetal.elf
 
   # ===========================================================================
-  # ARM FreeRTOS Build (Docker)
+  # ARM FreeRTOS Build and Test (Docker)
   # ===========================================================================
   build-arm-freertos:
     runs-on: ubuntu-22.04
-    name: Build (ARM FreeRTOS via Docker)
+    name: Build & Test (ARM FreeRTOS via Docker)
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Build FreeRTOS test Docker image
+      run: docker build -t anagram-chain-test-freertos --target test-freertos -f docker/Dockerfile .
+
+    - name: Run FreeRTOS tests in Docker+QEMU
+      run: |
+        timeout 15 docker run --rm anagram-chain-test-freertos || true
+
     - name: Build FreeRTOS Docker image
       run: docker build -t anagram-chain-freertos --target freertos -f docker/Dockerfile .
 
-    - name: Test FreeRTOS in Docker+QEMU (timeout after 10s)
+    - name: Run FreeRTOS demo in Docker+QEMU
       run: |
         timeout 10 docker run --rm anagram-chain-freertos || true
 
