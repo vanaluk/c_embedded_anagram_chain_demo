@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Anagram Chain Finder
+# Multi-stage Dockerfile for Embedded Anagram Chain Demo
 #
 # Stages:
 #   builder   - Build environment with compilers

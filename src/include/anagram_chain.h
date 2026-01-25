@@ -1,6 +1,6 @@
 /**
  * @file anagram_chain.h
- * @brief Public interface for Anagram Chain Finder
+ * @brief Public interface for Embedded Anagram Chain Demo
  *
  * A derived anagram is a word consisting of all letters from the base word
  * plus one additional letter (rearranged). Example: sail -> nails -> aliens

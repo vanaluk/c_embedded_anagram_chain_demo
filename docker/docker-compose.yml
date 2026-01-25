@@ -1,4 +1,4 @@
-# Docker Compose for Anagram Chain Finder
+# Docker Compose for Embedded Anagram Chain Demo
 #
 # Services:
 #   build   - Build both native and ARM binaries

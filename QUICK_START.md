@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get the Anagram Chain Finder running in under 1 minute.
+Get the Embedded Anagram Chain Demo running in under 1 minute.
 
 ## Prerequisites
 

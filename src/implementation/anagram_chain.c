@@ -1,6 +1,6 @@
 /**
  * @file anagram_chain.c
- * @brief Implementation of Anagram Chain Finder
+ * @brief Implementation of Embedded Anagram Chain Demo
  *
  * A derived anagram is a word consisting of all letters from the base word
  * plus one additional letter (rearranged). Example: sail -> nails -> aliens
@@ -233,7 +233,7 @@ void print_results(Dictionary *dict, ChainResults *results) {
 }
 
 void print_usage(const char *program_name) {
-    printf("Anagram Chain Finder\n");
+    printf("Embedded Anagram Chain Demo\n");
     printf("====================\n\n");
     printf("Finds the longest chain of derived anagrams in a dictionary.\n\n");
     printf("Usage: %s <dictionary_file> <starting_word>\n\n", program_name);

@@ -1,8 +1,17 @@
-# Anagram Chain Finder
+# Embedded Anagram Chain Demo
 
-[![CI](https://github.com/YOUR_USERNAME/anagram-chain/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/anagram-chain/actions/workflows/ci.yml)
+[![CI](https://github.com/vanaluk/c_embedded_anagram_chain_demo/actions/workflows/ci.yml/badge.svg)](https://github.com/vanaluk/c_embedded_anagram_chain_demo/actions/workflows/ci.yml)
 
-A high-performance C application that finds the longest chains of derived anagrams in a dictionary. Developed as a test task demonstrating Embedded Developer skills.
+Cross-platform Embedded C project showcasing professional development practices.
+
+**Highlights:**
+- Identical codebase compiles for **PC (x86_64)**, **ARM Cortex-M3 bare-metal**, and **ARM FreeRTOS**
+- Full **QEMU emulation** with integrated **VSCode debugging** (GDB remote)
+- **Docker-based builds** for reproducible environments
+- **Unit tests** running on all three platforms
+- **CI/CD** with GitHub Actions
+
+Demonstrates: Cross-compilation, RTOS integration, bare-metal programming, UART drivers, linker scripts, startup code, and embedded debugging workflows.
 
 ## What is a Derived Anagram?
 
@@ -15,14 +24,9 @@ nails → aliens (added 'e', rearranged to "aliens")
 
 The program finds the **longest chain** of such derived anagrams starting from a given word.
 
-## Features
+## The Algorithm
 
-- ⚡ **Efficient Algorithm** - O(n) dictionary indexing with hash table
-- 🔧 **Multi-Platform** - Builds for PC, ARM bare-metal, and ARM FreeRTOS
-- 🐳 **Docker Support** - Containerized build and execution with QEMU
-- 🧪 **Unit Tests** - Tests run on all platforms (PC, ARM bare-metal, FreeRTOS)
-- 📊 **Performance Measurement** - Built-in timing for benchmarking
-- 🔄 **CI/CD** - Automated builds and tests with GitHub Actions
+The project implements an anagram chain finder - a word puzzle algorithm that finds chains of derived anagrams.
 
 ## Quick Start
 
@@ -30,8 +34,8 @@ The program finds the **longest chain** of such derived anagrams starting from a
 
 ```bash
 # Clone with submodules
-git clone --recursive https://github.com/YOUR_USERNAME/anagram-chain.git
-cd anagram-chain
+git clone --recursive https://github.com/vanaluk/c_embedded_anagram_chain_demo.git
+cd c_embedded_anagram_chain_demo
 
 # Or if already cloned without --recursive:
 git submodule update --init --recursive
@@ -46,8 +50,8 @@ make
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/anagram-chain.git
-cd anagram-chain
+git clone https://github.com/vanaluk/c_embedded_anagram_chain_demo.git
+cd c_embedded_anagram_chain_demo
 
 # Initialize submodules (required for FreeRTOS)
 git submodule update --init --recursive
@@ -173,7 +177,7 @@ With `STUB_IMPLEMENTATION` defined (current state):
 
 ```
 ======================================
-  Anagram Chain Finder - Unit Tests
+  Embedded Anagram Chain Demo - Unit Tests
 ======================================
 
 Running unit tests...
@@ -305,7 +309,7 @@ This project uses git submodules for external dependencies:
 
 ```bash
 # Clone with all submodules
-git clone --recursive https://github.com/YOUR_USERNAME/anagram-chain.git
+git clone --recursive https://github.com/vanaluk/c_embedded_anagram_chain_demo.git
 
 # Or initialize submodules after clone
 git submodule update --init --recursive

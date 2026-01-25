@@ -1,6 +1,6 @@
 /**
  * @file main_pc.c
- * @brief PC/Native main entry point for Anagram Chain Finder
+ * @brief PC/Native main entry point for Embedded Anagram Chain Demo
  *
  * Command-line interface for running on desktop/server systems.
  */

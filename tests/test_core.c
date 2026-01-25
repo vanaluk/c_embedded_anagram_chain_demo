@@ -398,7 +398,7 @@ int run_all_tests(void) {
 
     test_puts("\n");
     test_puts("======================================\n");
-    test_puts("  Anagram Chain Finder - Unit Tests\n");
+    test_puts("  Embedded Anagram Chain Demo - Unit Tests\n");
     test_puts("======================================\n\n");
 
     test_puts("Running unit tests...\n\n");

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Anagram Chain Finder - Installation Script
+# Embedded Anagram Chain Demo - Installation Script
 #
 # This script installs all dependencies and initializes the project.
 #
@@ -30,7 +30,7 @@ print_error() {
 }
 
 show_help() {
-    echo "Anagram Chain Finder - Installation Script"
+    echo "Embedded Anagram Chain Demo - Installation Script"
     echo ""
     echo "Usage:"
     echo "  ./install.sh           - Install all dependencies"
@@ -280,7 +280,7 @@ case "${1:-}" in
         ;;
     *)
         echo "=========================================="
-        echo "  Anagram Chain Finder - Installation"
+        echo "  Embedded Anagram Chain Demo - Installation"
         echo "=========================================="
         echo ""
         

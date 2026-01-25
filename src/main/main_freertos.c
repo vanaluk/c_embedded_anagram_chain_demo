@@ -167,7 +167,7 @@ int main(void) {
     /* Banner */
     uart_puts("\n");
     uart_puts("========================================\n");
-    uart_puts("  Anagram Chain Finder - FreeRTOS\n");
+    uart_puts("  Embedded Anagram Chain Demo - FreeRTOS\n");
     uart_puts("  Target: LM3S6965 (Cortex-M3)\n");
     uart_puts("========================================\n");
 
