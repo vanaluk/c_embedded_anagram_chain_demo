@@ -7,6 +7,13 @@
 #   debug          - Build PC binary with debug symbols
 #   test           - Build and run unit tests
 #   clean          - Remove build artifacts
+#
+# Implementation selection:
+#   IMPL=ai        - Use AI implementation (default)
+#   IMPL=human     - Use human implementation
+#
+# Example:
+#   make IMPL=human test   - Build and test with human implementation
 
 # ==============================================================================
 # Compilers
@@ -16,11 +23,18 @@ CC = gcc
 CC_ARM_NONE = arm-none-eabi-gcc
 
 # ==============================================================================
+# Implementation Selection
+# ==============================================================================
+
+# IMPL can be 'ai' or 'human' (default: ai)
+IMPL ?= ai
+
+# ==============================================================================
 # Directories
 # ==============================================================================
 
 SRC_DIR = src
-IMPL_DIR = $(SRC_DIR)/implementation
+IMPL_DIR = $(SRC_DIR)/impl/$(IMPL)
 INCLUDE_DIR = $(SRC_DIR)/include
 MAIN_DIR = $(SRC_DIR)/main
 ARM_DIR = arm
@@ -121,7 +135,7 @@ all: $(TARGET_PC)
 
 $(TARGET_PC): $(MAIN_PC_SRC) $(IMPL_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $(MAIN_PC_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC native)"
+	@echo "Built: $@ (PC native, impl=$(IMPL))"
 
 # ==============================================================================
 # PC Debug Build
@@ -132,7 +146,7 @@ debug: $(TARGET_PC_DEBUG)
 
 $(TARGET_PC_DEBUG): $(MAIN_PC_SRC) $(IMPL_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS_DEBUG) -o $@ $(MAIN_PC_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC debug)"
+	@echo "Built: $@ (PC debug, impl=$(IMPL))"
 
 # ==============================================================================
 # ARM Bare-metal Build
@@ -173,7 +187,7 @@ test: $(TARGET_TEST_PC)
 
 $(TARGET_TEST_PC): $(TEST_PC_SRC) $(TEST_CORE_SRC) $(IMPL_SRC) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(TEST_INCLUDES) -o $@ $(TEST_PC_SRC) $(TEST_CORE_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC tests)"
+	@echo "Built: $@ (PC tests, impl=$(IMPL))"
 
 # ==============================================================================
 # Test Build and Run - ARM Bare-metal
@@ -350,3 +364,10 @@ help:
 	@echo "    format                 - Format code with clang-format"
 	@echo "    clean                  - Remove build artifacts"
 	@echo "    help                   - Show this help"
+	@echo ""
+	@echo "  Implementation selection:"
+	@echo "    IMPL=ai                - Use AI implementation (default)"
+	@echo "    IMPL=human             - Use human implementation"
+	@echo ""
+	@echo "  Example:"
+	@echo "    make IMPL=human test   - Test with human implementation"

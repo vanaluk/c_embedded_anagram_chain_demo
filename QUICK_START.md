@@ -75,6 +75,18 @@ Total execution time: Total: 0.187 ms
 make test
 ```
 
+## Implementation Selection
+
+The project has two implementations:
+
+```bash
+# AI implementation (default, fully working)
+make IMPL=ai test
+
+# Human implementation (TODO stubs for manual implementation)
+make IMPL=human test
+```
+
 ---
 
 ## Next Steps

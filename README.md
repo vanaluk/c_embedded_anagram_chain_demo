@@ -127,6 +127,26 @@ Total execution time: Total: 0.257 ms
 | Docker (PC) | `make docker-build` | Docker image |
 | Docker (FreeRTOS) | `make docker-build-freertos` | Docker image |
 
+### Implementation Selection
+
+The project has two implementations:
+
+| Implementation | Description | Command |
+|----------------|-------------|---------|
+| `ai` (default) | AI-generated, fully working | `make IMPL=ai` |
+| `human` | Skeleton with TODO stubs | `make IMPL=human` |
+
+```bash
+# Build with AI implementation (default)
+make
+
+# Build with human implementation
+make IMPL=human
+
+# Test with human implementation
+make IMPL=human test
+```
+
 ### ARM Bare-metal Build
 
 ```bash
@@ -257,8 +277,11 @@ Where n = word count, m = average word length
 ├── src/
 │   ├── include/                # Public headers
 │   │   └── anagram_chain.h     # API definitions
-│   ├── implementation/         # Implementation files
-│   │   └── anagram_chain.c     # Core algorithm
+│   ├── impl/                   # Implementation files
+│   │   ├── ai/                 # AI-generated implementation
+│   │   │   └── anagram_chain.c # Complete working solution
+│   │   └── human/              # Human implementation (TODO stubs)
+│   │       └── anagram_chain.c # Skeleton for manual implementation
 │   └── main/                   # Entry points
 │       ├── main_pc.c           # PC main
 │       ├── main_arm.c          # ARM bare-metal main
