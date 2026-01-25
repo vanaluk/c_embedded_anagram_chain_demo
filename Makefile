@@ -37,14 +37,16 @@ INCLUDES = -I$(INCLUDE_DIR)
 INCLUDES_ARM = $(INCLUDES) -I$(ARM_DIR)
 
 # PC flags
-CFLAGS = -Wall -Wextra -std=c11 -O2 $(INCLUDES)
-CFLAGS_DEBUG = -Wall -Wextra -std=c11 -g -O0 -DDEBUG $(INCLUDES)
+# _DEFAULT_SOURCE enables POSIX/BSD/System V extensions (includes clock_gettime)
+CFLAGS = -Wall -Wextra -std=c11 -O2 -D_DEFAULT_SOURCE $(INCLUDES)
+CFLAGS_DEBUG = -Wall -Wextra -std=c11 -g -O0 -DDEBUG -D_DEFAULT_SOURCE $(INCLUDES)
 
 # ARM bare-metal flags
 CFLAGS_ARM_BAREMETAL = -Wall -Wextra -std=c11 -O2 -g \
     -mcpu=cortex-m3 -mthumb -mfloat-abi=soft \
     -ffunction-sections -fdata-sections \
     -specs=nano.specs -specs=nosys.specs \
+    -DPLATFORM_ARM \
     $(INCLUDES_ARM)
 
 # ARM bare-metal debug flags
@@ -155,7 +157,7 @@ arm-freertos: $(TARGET_FREERTOS_ELF)
 $(TARGET_FREERTOS_ELF): $(MAIN_FREERTOS_SRC) $(IMPL_SRC) $(ARM_SRCS) $(FREERTOS_SRCS) | $(BIN_DIR)
 	$(CC_ARM_NONE) $(CFLAGS_ARM_BAREMETAL) $(LDFLAGS_ARM_BAREMETAL) \
 		$(FREERTOS_INCLUDES) \
-		-o $@ $(ARM_DIR)/startup.s $(ARM_DIR)/uart.c \
+		-o $@ $(ARM_DIR)/startup.s $(ARM_DIR)/uart.c $(ARM_DIR)/syscalls.c \
 		$(FREERTOS_SRCS) $(MAIN_FREERTOS_SRC) $(IMPL_SRC)
 	@echo "Built: $@ (ARM Cortex-M3 + FreeRTOS)"
 	@arm-none-eabi-size $@ 2>/dev/null || true

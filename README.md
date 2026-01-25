@@ -74,7 +74,11 @@ make
 docker build -t anagram-chain --target runtime -f docker/Dockerfile .
 docker run --rm anagram-chain --help
 
-# Build and run ARM FreeRTOS version
+# Build and run ARM bare-metal version (QEMU)
+docker build -t anagram-chain-baremetal --target baremetal -f docker/Dockerfile .
+docker run --rm anagram-chain-baremetal
+
+# Build and run ARM FreeRTOS version (QEMU)
 docker build -t anagram-chain-freertos --target freertos -f docker/Dockerfile .
 docker run --rm anagram-chain-freertos
 ```
@@ -94,11 +98,9 @@ docker run --rm anagram-chain-freertos
 
 ### Example Output
 
-> **Note:** The implementation is currently stubbed (`STUB_IMPLEMENTATION` defined in `src/include/anagram_chain.h`). Remove this define after implementing the algorithm to enable full functionality.
-
 ```
 Loading dictionary: tests/data/example.txt
-Dictionary loaded: 0.123 ms
+Dictionary loaded: 0.019 ms
 Words loaded: 12
 
 Building index...
@@ -173,8 +175,6 @@ make test-all
 
 ### Test Output
 
-With `STUB_IMPLEMENTATION` defined (current state):
-
 ```
 ======================================
   Embedded Anagram Chain Demo - Unit Tests
@@ -183,22 +183,17 @@ With `STUB_IMPLEMENTATION` defined (current state):
 Running unit tests...
 
 Signature Tests:
-  [SKIP] compute_signature: stub implementation
-  [SKIP] is_derived_signature: stub implementation
+  [PASS] compute_signature
+  [PASS] is_derived_signature
+
+Validation Tests:
+  [PASS] is_valid_word
 
 ...
 
 ======================================
   All tests passed!
 ======================================
-```
-
-After implementation (remove `STUB_IMPLEMENTATION`):
-
-```
-Signature Tests:
-  [PASS] compute_signature
-  [PASS] is_derived_signature
 ```
 
 ### Docker Tests

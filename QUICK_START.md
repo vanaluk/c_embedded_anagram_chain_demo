@@ -49,24 +49,22 @@ make
 
 ## Expected Output
 
-> **Note:** The implementation is currently stubbed. The output below shows what you will see after the implementation is complete. With the stub, you will see "Error: Failed to create dictionary".
-
 ```
 Loading dictionary: tests/data/example.txt
-Dictionary loaded: 0.123 ms
+Dictionary loaded: 0.019 ms
 Words loaded: 12
 
 Building index...
-Index built: 0.045 ms
+Index built: 0.027 ms
 Unique signatures: 12
 
 Searching for longest chains starting from 'abck'...
-Search completed: 0.089 ms
+Search completed: 0.102 ms
 
 Found 1 chain(s) of length 4:
 abck->abcek->abcelk->baclekt
 
-Total execution time: Total: 0.257 ms
+Total execution time: Total: 0.187 ms
 ```
 
 ---
