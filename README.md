@@ -74,7 +74,11 @@ make
 docker build -t anagram-chain --target runtime -f docker/Dockerfile .
 docker run --rm anagram-chain --help
 
-# Build and run ARM FreeRTOS version
+# Build and run ARM bare-metal version (QEMU)
+docker build -t anagram-chain-baremetal --target baremetal -f docker/Dockerfile .
+docker run --rm anagram-chain-baremetal
+
+# Build and run ARM FreeRTOS version (QEMU)
 docker build -t anagram-chain-freertos --target freertos -f docker/Dockerfile .
 docker run --rm anagram-chain-freertos
 ```
@@ -94,11 +98,9 @@ docker run --rm anagram-chain-freertos
 
 ### Example Output
 
-> **Note:** The implementation is currently stubbed (`STUB_IMPLEMENTATION` defined in `src/include/anagram_chain.h`). Remove this define after implementing the algorithm to enable full functionality.
-
 ```
 Loading dictionary: tests/data/example.txt
-Dictionary loaded: 0.123 ms
+Dictionary loaded: 0.019 ms
 Words loaded: 12
 
 Building index...
@@ -124,6 +126,86 @@ Total execution time: Total: 0.257 ms
 | ARM FreeRTOS | `make arm-freertos` | `bin/anagram_chain_freertos.elf` |
 | Docker (PC) | `make docker-build` | Docker image |
 | Docker (FreeRTOS) | `make docker-build-freertos` | Docker image |
+
+### Implementation Selection
+
+The project has two implementations:
+
+| Implementation | Description | Command |
+|----------------|-------------|---------|
+| `ai` (default) | AI-generated, fully working | `make IMPL=ai` |
+| `human` | Skeleton with TODO stubs | `make IMPL=human` |
+
+**Binary naming:**
+
+| Command | Output Binary | Description |
+|---------|---------------|-------------|
+| `make` | `bin/anagram_chain` | Default build (AI impl) |
+| `make IMPL=ai` | `bin/anagram_chain` | Same as default |
+| `make IMPL=human` | `bin/anagram_chain` | Human impl, same name |
+| `make IMPL=both` | `bin/anagram_chain_ai` + `bin/anagram_chain_human` | Both binaries for benchmarking |
+
+Regular builds always produce `bin/anagram_chain`. Use `make IMPL=both` when you need both implementations side-by-side for comparison.
+
+```bash
+# Build with AI implementation (default)
+make
+
+# Build with human implementation
+make IMPL=human
+
+# Test with human implementation
+make IMPL=human test
+
+# Build both for benchmarking
+make IMPL=both
+```
+
+### Benchmarking
+
+Compare AI vs Human implementations:
+
+```bash
+# Step 1: Generate stress test dictionary (~400k words, ~15-20 sec execution)
+make generate-stress
+
+# Or manually with custom parameters:
+python3 tests/data/generate_stress_dict.py tests/data/stress.txt 5000 15
+# Arguments: output_file chain_count max_chain_length
+
+# Step 2: Build both implementations and run benchmark
+make benchmark ARGS='tests/data/stress.txt fu 3'
+
+# Or run manually:
+make IMPL=both
+python3 benchmark.py tests/data/stress.txt fu 3
+# Arguments: dictionary start_word runs
+```
+
+**Benchmark scripts:**
+
+| Script | Description | Usage |
+|--------|-------------|-------|
+| `tests/data/generate_stress_dict.py` | Generate stress test dictionary | `python3 tests/data/generate_stress_dict.py <output> <chains> <length>` |
+| `benchmark.py` | Compare AI vs Human performance | `python3 benchmark.py <dictionary> <start_word> <runs>` |
+
+Example benchmark output:
+```
+============================================================
+ANAGRAM CHAIN BENCHMARK
+============================================================
+Dictionary: tests/data/stress.txt
+Start word: fu
+Runs: 3
+
+Metric                       AI           Human            Diff
+----------------------------------------------------------------------
+Avg time              22819.91 ms     18500.00 ms         -19.0%
+Chain count                7346           7346           MATCH
+Chain length                 17             17           MATCH
+
+Human is 1.23x FASTER than AI
+```
 
 ### ARM Bare-metal Build
 
@@ -173,8 +255,6 @@ make test-all
 
 ### Test Output
 
-With `STUB_IMPLEMENTATION` defined (current state):
-
 ```
 ======================================
   Embedded Anagram Chain Demo - Unit Tests
@@ -183,22 +263,17 @@ With `STUB_IMPLEMENTATION` defined (current state):
 Running unit tests...
 
 Signature Tests:
-  [SKIP] compute_signature: stub implementation
-  [SKIP] is_derived_signature: stub implementation
+  [PASS] compute_signature
+  [PASS] is_derived_signature
+
+Validation Tests:
+  [PASS] is_valid_word
 
 ...
 
 ======================================
   All tests passed!
 ======================================
-```
-
-After implementation (remove `STUB_IMPLEMENTATION`):
-
-```
-Signature Tests:
-  [PASS] compute_signature
-  [PASS] is_derived_signature
 ```
 
 ### Docker Tests
@@ -262,8 +337,11 @@ Where n = word count, m = average word length
 ├── src/
 │   ├── include/                # Public headers
 │   │   └── anagram_chain.h     # API definitions
-│   ├── implementation/         # Implementation files
-│   │   └── anagram_chain.c     # Core algorithm
+│   ├── impl/                   # Implementation files
+│   │   ├── ai/                 # AI-generated implementation
+│   │   │   └── anagram_chain.c # Complete working solution
+│   │   └── human/              # Human implementation (TODO stubs)
+│   │       └── anagram_chain.c # Skeleton for manual implementation
 │   └── main/                   # Entry points
 │       ├── main_pc.c           # PC main
 │       ├── main_arm.c          # ARM bare-metal main

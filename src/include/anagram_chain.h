@@ -11,12 +11,6 @@
 
 #include <stddef.h>
 
-/**
- * STUB_IMPLEMENTATION - Remove this define when real implementation is ready.
- * While defined, all tests will be skipped and marked as passed.
- */
-#define STUB_IMPLEMENTATION
-
 #ifdef __cplusplus
 extern "C" {
 #endif

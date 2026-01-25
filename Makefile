@@ -7,6 +7,15 @@
 #   debug          - Build PC binary with debug symbols
 #   test           - Build and run unit tests
 #   clean          - Remove build artifacts
+#
+# Implementation selection:
+#   IMPL=ai        - Use AI implementation (default)
+#   IMPL=human     - Use human implementation
+#   IMPL=both      - Build both implementations (for benchmarking)
+#
+# Example:
+#   make IMPL=human test   - Build and test with human implementation
+#   make IMPL=both         - Build bin/anagram_chain_ai and bin/anagram_chain_human
 
 # ==============================================================================
 # Compilers
@@ -16,11 +25,28 @@ CC = gcc
 CC_ARM_NONE = arm-none-eabi-gcc
 
 # ==============================================================================
+# Implementation Selection
+# ==============================================================================
+
+# IMPL can be 'ai', 'human', or 'both' (default: ai)
+IMPL ?= ai
+
+# Handle IMPL=both specially
+ifeq ($(IMPL),both)
+    BUILD_BOTH := 1
+    # For directory resolution, default to ai (will be overridden in build-both target)
+    IMPL_DIR_RESOLVED = $(SRC_DIR)/impl/ai
+else
+    BUILD_BOTH := 0
+    IMPL_DIR_RESOLVED = $(SRC_DIR)/impl/$(IMPL)
+endif
+
+# ==============================================================================
 # Directories
 # ==============================================================================
 
 SRC_DIR = src
-IMPL_DIR = $(SRC_DIR)/implementation
+IMPL_DIR = $(IMPL_DIR_RESOLVED)
 INCLUDE_DIR = $(SRC_DIR)/include
 MAIN_DIR = $(SRC_DIR)/main
 ARM_DIR = arm
@@ -37,14 +63,16 @@ INCLUDES = -I$(INCLUDE_DIR)
 INCLUDES_ARM = $(INCLUDES) -I$(ARM_DIR)
 
 # PC flags
-CFLAGS = -Wall -Wextra -std=c11 -O2 $(INCLUDES)
-CFLAGS_DEBUG = -Wall -Wextra -std=c11 -g -O0 -DDEBUG $(INCLUDES)
+# _DEFAULT_SOURCE enables POSIX/BSD/System V extensions (includes clock_gettime)
+CFLAGS = -Wall -Wextra -std=c11 -O2 -D_DEFAULT_SOURCE $(INCLUDES)
+CFLAGS_DEBUG = -Wall -Wextra -std=c11 -g -O0 -DDEBUG -D_DEFAULT_SOURCE $(INCLUDES)
 
 # ARM bare-metal flags
 CFLAGS_ARM_BAREMETAL = -Wall -Wextra -std=c11 -O2 -g \
     -mcpu=cortex-m3 -mthumb -mfloat-abi=soft \
     -ffunction-sections -fdata-sections \
     -specs=nano.specs -specs=nosys.specs \
+    -DPLATFORM_ARM \
     $(INCLUDES_ARM)
 
 # ARM bare-metal debug flags
@@ -99,10 +127,12 @@ FREERTOS_INCLUDES = -I$(ARM_DIR)/freertos \
 # ==============================================================================
 
 TARGET_PC = $(BIN_DIR)/anagram_chain
+TARGET_PC_NAMED = $(BIN_DIR)/anagram_chain_$(IMPL)
 TARGET_PC_DEBUG = $(BIN_DIR)/anagram_chain_debug
 TARGET_ARM_ELF = $(BIN_DIR)/anagram_chain_baremetal.elf
 TARGET_FREERTOS_ELF = $(BIN_DIR)/anagram_chain_freertos.elf
 TARGET_TEST_PC = $(BUILD_DIR)/test_pc
+TARGET_TEST_PC_NAMED = $(BUILD_DIR)/test_$(IMPL)
 TARGET_TEST_ARM = $(BIN_DIR)/test_baremetal.elf
 TARGET_TEST_FREERTOS = $(BIN_DIR)/test_freertos.elf
 
@@ -111,7 +141,11 @@ TARGET_TEST_FREERTOS = $(BIN_DIR)/test_freertos.elf
 # ==============================================================================
 
 .PHONY: all
+ifeq ($(BUILD_BOTH),1)
+all: build-both
+else
 all: $(TARGET_PC)
+endif
 
 # ==============================================================================
 # PC Native Build
@@ -119,7 +153,7 @@ all: $(TARGET_PC)
 
 $(TARGET_PC): $(MAIN_PC_SRC) $(IMPL_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $(MAIN_PC_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC native)"
+	@echo "Built: $@ (PC native, impl=$(IMPL))"
 
 # ==============================================================================
 # PC Debug Build
@@ -130,7 +164,7 @@ debug: $(TARGET_PC_DEBUG)
 
 $(TARGET_PC_DEBUG): $(MAIN_PC_SRC) $(IMPL_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS_DEBUG) -o $@ $(MAIN_PC_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC debug)"
+	@echo "Built: $@ (PC debug, impl=$(IMPL))"
 
 # ==============================================================================
 # ARM Bare-metal Build
@@ -155,7 +189,7 @@ arm-freertos: $(TARGET_FREERTOS_ELF)
 $(TARGET_FREERTOS_ELF): $(MAIN_FREERTOS_SRC) $(IMPL_SRC) $(ARM_SRCS) $(FREERTOS_SRCS) | $(BIN_DIR)
 	$(CC_ARM_NONE) $(CFLAGS_ARM_BAREMETAL) $(LDFLAGS_ARM_BAREMETAL) \
 		$(FREERTOS_INCLUDES) \
-		-o $@ $(ARM_DIR)/startup.s $(ARM_DIR)/uart.c \
+		-o $@ $(ARM_DIR)/startup.s $(ARM_DIR)/uart.c $(ARM_DIR)/syscalls.c \
 		$(FREERTOS_SRCS) $(MAIN_FREERTOS_SRC) $(IMPL_SRC)
 	@echo "Built: $@ (ARM Cortex-M3 + FreeRTOS)"
 	@arm-none-eabi-size $@ 2>/dev/null || true
@@ -171,7 +205,7 @@ test: $(TARGET_TEST_PC)
 
 $(TARGET_TEST_PC): $(TEST_PC_SRC) $(TEST_CORE_SRC) $(IMPL_SRC) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(TEST_INCLUDES) -o $@ $(TEST_PC_SRC) $(TEST_CORE_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC tests)"
+	@echo "Built: $@ (PC tests, impl=$(IMPL))"
 
 # ==============================================================================
 # Test Build and Run - ARM Bare-metal
@@ -299,7 +333,39 @@ run-freertos: $(TARGET_FREERTOS_ELF)
 
 .PHONY: format
 format:
-	clang-format -i $(IMPL_DIR)/*.c $(MAIN_DIR)/*.c $(TEST_DIR)/*.c $(INCLUDE_DIR)/*.h 2>/dev/null || true
+	clang-format -i src/impl/*/*.c $(MAIN_DIR)/*.c $(TEST_DIR)/*.c $(INCLUDE_DIR)/*.h 2>/dev/null || true
+
+# ==============================================================================
+# Benchmark Targets
+# ==============================================================================
+
+.PHONY: build-both
+build-both: | $(BIN_DIR)
+	@echo "Building both implementations..."
+	@$(MAKE) --no-print-directory IMPL=ai
+	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_ai
+	@$(MAKE) --no-print-directory IMPL=human
+	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_human
+	@echo "Built: bin/anagram_chain_ai and bin/anagram_chain_human"
+
+.PHONY: benchmark
+benchmark:
+	@$(MAKE) --no-print-directory IMPL=both
+	@echo "Running benchmark..."
+	@python3 benchmark.py $(ARGS)
+
+# Stress test parameters (can be overridden)
+STRESS_CHAINS ?= 5000
+STRESS_LENGTH ?= 15
+STRESS_FILE ?= tests/data/stress.txt
+
+.PHONY: generate-stress
+generate-stress:
+	@echo "Generating stress test dictionary..."
+	@echo "  Chains: $(STRESS_CHAINS), Max length: $(STRESS_LENGTH)"
+	python3 tests/data/generate_stress_dict.py $(STRESS_FILE) $(STRESS_CHAINS) $(STRESS_LENGTH)
+	@echo ""
+	@echo "Usage: make benchmark ARGS='$(STRESS_FILE) <start_word> <runs>'"
 
 # ==============================================================================
 # Clean
@@ -348,3 +414,25 @@ help:
 	@echo "    format                 - Format code with clang-format"
 	@echo "    clean                  - Remove build artifacts"
 	@echo "    help                   - Show this help"
+	@echo ""
+	@echo "  Benchmark:"
+	@echo "    generate-stress        - Generate stress test dictionary"
+	@echo "      STRESS_CHAINS=5000   - Number of chain groups (default: 5000)"
+	@echo "      STRESS_LENGTH=15     - Max chain length (default: 15)"
+	@echo "      STRESS_FILE=...      - Output file (default: tests/data/stress.txt)"
+	@echo "    benchmark              - Build both and run benchmark"
+	@echo ""
+	@echo "  Implementation selection:"
+	@echo "    IMPL=ai                - Use AI implementation (default)"
+	@echo "    IMPL=human             - Use human implementation"
+	@echo "    IMPL=both              - Build both: anagram_chain_ai + anagram_chain_human"
+	@echo ""
+	@echo "  Examples:"
+	@echo "    make                   - Build with AI (default)"
+	@echo "    make IMPL=human        - Build with human implementation"
+	@echo "    make IMPL=both         - Build both binaries for comparison"
+	@echo "    make IMPL=human test   - Test human implementation"
+	@echo "    make generate-stress   - Generate default stress dictionary"
+	@echo "    make generate-stress STRESS_CHAINS=1000 STRESS_LENGTH=10  - Small dict"
+	@echo "    make generate-stress STRESS_CHAINS=10000 STRESS_LENGTH=20 - Large dict"
+	@echo "    make benchmark ARGS='tests/data/stress.txt fu 3'"

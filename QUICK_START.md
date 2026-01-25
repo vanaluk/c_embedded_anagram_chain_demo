@@ -49,24 +49,22 @@ make
 
 ## Expected Output
 
-> **Note:** The implementation is currently stubbed. The output below shows what you will see after the implementation is complete. With the stub, you will see "Error: Failed to create dictionary".
-
 ```
 Loading dictionary: tests/data/example.txt
-Dictionary loaded: 0.123 ms
+Dictionary loaded: 0.019 ms
 Words loaded: 12
 
 Building index...
-Index built: 0.045 ms
+Index built: 0.027 ms
 Unique signatures: 12
 
 Searching for longest chains starting from 'abck'...
-Search completed: 0.089 ms
+Search completed: 0.102 ms
 
 Found 1 chain(s) of length 4:
 abck->abcek->abcelk->baclekt
 
-Total execution time: Total: 0.257 ms
+Total execution time: Total: 0.187 ms
 ```
 
 ---
@@ -76,6 +74,46 @@ Total execution time: Total: 0.257 ms
 ```bash
 make test
 ```
+
+## Implementation Selection
+
+The project has two implementations:
+
+```bash
+# AI implementation (default, fully working)
+make IMPL=ai test
+
+# Human implementation (TODO stubs for manual implementation)
+make IMPL=human test
+```
+
+**Binary naming:**
+- `make` or `make IMPL=ai` → `bin/anagram_chain` (AI implementation)
+- `make IMPL=human` → `bin/anagram_chain` (Human implementation, same name)
+- `make IMPL=both` → `bin/anagram_chain_ai` + `bin/anagram_chain_human` (both for benchmarking)
+
+## Benchmarking
+
+Compare performance of AI vs Human implementations:
+
+```bash
+# Step 1: Generate stress test dictionary (~400k words)
+make generate-stress
+
+# Or with custom parameters:
+python3 tests/data/generate_stress_dict.py tests/data/stress.txt 5000 15
+
+# Step 2: Build both and run benchmark
+make benchmark ARGS='tests/data/stress.txt fu 3'
+
+# Or manually:
+make IMPL=both
+python3 benchmark.py tests/data/stress.txt fu 3
+```
+
+**Scripts:**
+- `tests/data/generate_stress_dict.py <output> <chains> <length>` - generate dictionary
+- `benchmark.py <dictionary> <start_word> <runs>` - compare implementations
 
 ---
 
