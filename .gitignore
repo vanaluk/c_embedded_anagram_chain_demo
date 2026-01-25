@@ -25,6 +25,3 @@ tmp/
 
 # Cache files
 .cache/
-
-# FreeRTOS kernel (downloaded separately)
-arm/freertos/FreeRTOS-Kernel/

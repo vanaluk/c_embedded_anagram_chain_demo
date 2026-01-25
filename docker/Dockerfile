@@ -26,16 +26,20 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy source files
+# Copy source files (including FreeRTOS-Kernel submodule)
 COPY src/ ./src/
 COPY arm/ ./arm/
 COPY tests/ ./tests/
 COPY Makefile ./
 
-# Download FreeRTOS Kernel (minimal clone)
-RUN git clone --depth 1 --branch V11.1.0 \
-    https://github.com/FreeRTOS/FreeRTOS-Kernel.git \
-    arm/freertos/FreeRTOS-Kernel
+# Note: FreeRTOS-Kernel is expected to be in arm/freertos/FreeRTOS-Kernel
+# It should be initialized via git submodule before docker build
+# If submodule is not initialized, clone it here as fallback
+RUN if [ ! -f "arm/freertos/FreeRTOS-Kernel/tasks.c" ]; then \
+        git clone --depth 1 --branch V11.1.0 \
+            https://github.com/FreeRTOS/FreeRTOS-Kernel.git \
+            arm/freertos/FreeRTOS-Kernel; \
+    fi
 
 # Build PC native binary
 RUN make clean 2>/dev/null || true && make
