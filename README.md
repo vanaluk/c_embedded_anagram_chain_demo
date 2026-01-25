@@ -163,48 +163,15 @@ make IMPL=both
 
 ### Benchmarking
 
-Compare AI vs Human implementations:
+See [BENCHMARK.md](BENCHMARK.md) for detailed benchmark guide.
 
 ```bash
-# Step 1: Generate stress test dictionary (~400k words, ~15-20 sec execution)
+# Quick start
 make generate-stress
-
-# Or manually with custom parameters:
-python3 tests/data/generate_stress_dict.py tests/data/stress.txt 5000 15
-# Arguments: output_file chain_count max_chain_length
-
-# Step 2: Build both implementations and run benchmark
 make benchmark ARGS='tests/data/stress.txt fu 3'
 
-# Or run manually:
-make IMPL=both
-python3 benchmark.py tests/data/stress.txt fu 3
-# Arguments: dictionary start_word runs
-```
-
-**Benchmark scripts:**
-
-| Script | Description | Usage |
-|--------|-------------|-------|
-| `tests/data/generate_stress_dict.py` | Generate stress test dictionary | `python3 tests/data/generate_stress_dict.py <output> <chains> <length>` |
-| `benchmark.py` | Compare AI vs Human performance | `python3 benchmark.py <dictionary> <start_word> <runs>` |
-
-Example benchmark output:
-```
-============================================================
-ANAGRAM CHAIN BENCHMARK
-============================================================
-Dictionary: tests/data/stress.txt
-Start word: fu
-Runs: 3
-
-Metric                       AI           Human            Diff
-----------------------------------------------------------------------
-Avg time              22819.91 ms     18500.00 ms         -19.0%
-Chain count                7346           7346           MATCH
-Chain length                 17             17           MATCH
-
-Human is 1.23x FASTER than AI
+# Run single implementation
+make IMPL=human stress
 ```
 
 ### ARM Bare-metal Build

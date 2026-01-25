@@ -358,6 +358,8 @@ benchmark:
 STRESS_CHAINS ?= 5000
 STRESS_LENGTH ?= 15
 STRESS_FILE ?= tests/data/stress.txt
+STRESS_WORD ?= fu
+STRESS_RUNS ?= 3
 
 .PHONY: generate-stress
 generate-stress:
@@ -366,6 +368,18 @@ generate-stress:
 	python3 tests/data/generate_stress_dict.py $(STRESS_FILE) $(STRESS_CHAINS) $(STRESS_LENGTH)
 	@echo ""
 	@echo "Usage: make benchmark ARGS='$(STRESS_FILE) <start_word> <runs>'"
+
+# Run stress test with current IMPL (ai or human)
+.PHONY: stress
+stress: $(TARGET_PC)
+	@echo "Running stress test with IMPL=$(IMPL)..."
+	@echo "Dictionary: $(STRESS_FILE), Start: $(STRESS_WORD), Runs: $(STRESS_RUNS)"
+	@echo ""
+	@for i in $$(seq 1 $(STRESS_RUNS)); do \
+		echo "=== Run $$i/$(STRESS_RUNS) ==="; \
+		./$(TARGET_PC) $(STRESS_FILE) $(STRESS_WORD); \
+		echo ""; \
+	done
 
 # ==============================================================================
 # Clean
@@ -420,7 +434,10 @@ help:
 	@echo "      STRESS_CHAINS=5000   - Number of chain groups (default: 5000)"
 	@echo "      STRESS_LENGTH=15     - Max chain length (default: 15)"
 	@echo "      STRESS_FILE=...      - Output file (default: tests/data/stress.txt)"
-	@echo "    benchmark              - Build both and run benchmark"
+	@echo "    stress                 - Run stress test with current IMPL"
+	@echo "      STRESS_WORD=fu       - Start word (default: fu)"
+	@echo "      STRESS_RUNS=3        - Number of runs (default: 3)"
+	@echo "    benchmark              - Build both and compare AI vs Human"
 	@echo ""
 	@echo "  Implementation selection:"
 	@echo "    IMPL=ai                - Use AI implementation (default)"
@@ -434,5 +451,6 @@ help:
 	@echo "    make IMPL=human test   - Test human implementation"
 	@echo "    make generate-stress   - Generate default stress dictionary"
 	@echo "    make generate-stress STRESS_CHAINS=1000 STRESS_LENGTH=10  - Small dict"
-	@echo "    make generate-stress STRESS_CHAINS=10000 STRESS_LENGTH=20 - Large dict"
-	@echo "    make benchmark ARGS='tests/data/stress.txt fu 3'"
+	@echo "    make IMPL=human stress - Run stress test with human impl"
+	@echo "    make IMPL=ai stress    - Run stress test with AI impl"
+	@echo "    make benchmark ARGS='tests/data/stress.txt fu 3' - Compare both"

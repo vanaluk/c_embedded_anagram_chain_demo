@@ -94,31 +94,18 @@ make IMPL=human test
 
 ## Benchmarking
 
-Compare performance of AI vs Human implementations:
+See [BENCHMARK.md](BENCHMARK.md) for detailed guide.
 
 ```bash
-# Step 1: Generate stress test dictionary (~400k words)
 make generate-stress
-
-# Or with custom parameters:
-python3 tests/data/generate_stress_dict.py tests/data/stress.txt 5000 15
-
-# Step 2: Build both and run benchmark
 make benchmark ARGS='tests/data/stress.txt fu 3'
-
-# Or manually:
-make IMPL=both
-python3 benchmark.py tests/data/stress.txt fu 3
 ```
-
-**Scripts:**
-- `tests/data/generate_stress_dict.py <output> <chains> <length>` - generate dictionary
-- `benchmark.py <dictionary> <start_word> <runs>` - compare implementations
 
 ---
 
 ## Next Steps
 
 - See [README.md](README.md) for full documentation
+- See [BENCHMARK.md](BENCHMARK.md) for benchmark guide
 - See [docs/algorithm.md](docs/algorithm.md) for algorithm details
 - Try with your own dictionary file!
