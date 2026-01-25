@@ -100,22 +100,26 @@ jobs:
         timeout 10 docker run --rm anagram-chain-freertos || true
 
   # ===========================================================================
-  # Docker Build (PC)
+  # Docker Build Verification
+  # Verifies that all targets build correctly inside our Docker container
   # ===========================================================================
   docker-build:
     runs-on: ubuntu-22.04
-    name: Docker Build (PC)
+    name: Docker Build Verification
 
     steps:
-    - name: Checkout code
+    - name: Checkout code with submodules
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-    - name: Build Docker image
-      run: docker build -t anagram-chain -f docker/Dockerfile .
+    - name: Build all targets in Docker (PC, ARM bare-metal, ARM FreeRTOS)
+      run: docker build -t anagram-chain-builder --target builder -f docker/Dockerfile .
 
-    - name: Show help
+    - name: Build runtime image and verify help
       run: |
-        docker run --rm anagram-chain --help || true
+        docker build -t anagram-chain --target runtime -f docker/Dockerfile .
+        docker run --rm anagram-chain --help
 
   # ===========================================================================
   # Code Quality

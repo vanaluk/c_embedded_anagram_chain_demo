@@ -7,10 +7,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "anagram_chain.h"
 
 int main(int argc, char *argv[]) {
+    /* Handle --help flag */
+    if (argc == 2 && (strcmp(argv[1], "--help") == 0 ||
+                      strcmp(argv[1], "-h") == 0)) {
+        print_usage(argv[0]);
+        return 0;
+    }
+
     /* Validate arguments */
     if (argc != 3) {
         print_usage(argv[0]);
