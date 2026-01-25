@@ -16,6 +16,7 @@ core.*
 
 # Test outputs
 tests/data/*.generated.txt
+tests/data/stress.txt
 
 # Docker
 .docker/
@@ -25,3 +26,6 @@ tmp/
 
 # Cache files
 .cache/
+
+docs/
+compile_commands.json

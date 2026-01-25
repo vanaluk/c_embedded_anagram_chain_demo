@@ -11,9 +11,11 @@
 # Implementation selection:
 #   IMPL=ai        - Use AI implementation (default)
 #   IMPL=human     - Use human implementation
+#   IMPL=both      - Build both implementations (for benchmarking)
 #
 # Example:
 #   make IMPL=human test   - Build and test with human implementation
+#   make IMPL=both         - Build bin/anagram_chain_ai and bin/anagram_chain_human
 
 # ==============================================================================
 # Compilers
@@ -26,15 +28,25 @@ CC_ARM_NONE = arm-none-eabi-gcc
 # Implementation Selection
 # ==============================================================================
 
-# IMPL can be 'ai' or 'human' (default: ai)
+# IMPL can be 'ai', 'human', or 'both' (default: ai)
 IMPL ?= ai
+
+# Handle IMPL=both specially
+ifeq ($(IMPL),both)
+    BUILD_BOTH := 1
+    # For directory resolution, default to ai (will be overridden in build-both target)
+    IMPL_DIR_RESOLVED = $(SRC_DIR)/impl/ai
+else
+    BUILD_BOTH := 0
+    IMPL_DIR_RESOLVED = $(SRC_DIR)/impl/$(IMPL)
+endif
 
 # ==============================================================================
 # Directories
 # ==============================================================================
 
 SRC_DIR = src
-IMPL_DIR = $(SRC_DIR)/impl/$(IMPL)
+IMPL_DIR = $(IMPL_DIR_RESOLVED)
 INCLUDE_DIR = $(SRC_DIR)/include
 MAIN_DIR = $(SRC_DIR)/main
 ARM_DIR = arm
@@ -115,10 +127,12 @@ FREERTOS_INCLUDES = -I$(ARM_DIR)/freertos \
 # ==============================================================================
 
 TARGET_PC = $(BIN_DIR)/anagram_chain
+TARGET_PC_NAMED = $(BIN_DIR)/anagram_chain_$(IMPL)
 TARGET_PC_DEBUG = $(BIN_DIR)/anagram_chain_debug
 TARGET_ARM_ELF = $(BIN_DIR)/anagram_chain_baremetal.elf
 TARGET_FREERTOS_ELF = $(BIN_DIR)/anagram_chain_freertos.elf
 TARGET_TEST_PC = $(BUILD_DIR)/test_pc
+TARGET_TEST_PC_NAMED = $(BUILD_DIR)/test_$(IMPL)
 TARGET_TEST_ARM = $(BIN_DIR)/test_baremetal.elf
 TARGET_TEST_FREERTOS = $(BIN_DIR)/test_freertos.elf
 
@@ -127,7 +141,11 @@ TARGET_TEST_FREERTOS = $(BIN_DIR)/test_freertos.elf
 # ==============================================================================
 
 .PHONY: all
+ifeq ($(BUILD_BOTH),1)
+all: build-both
+else
 all: $(TARGET_PC)
+endif
 
 # ==============================================================================
 # PC Native Build
@@ -315,7 +333,39 @@ run-freertos: $(TARGET_FREERTOS_ELF)
 
 .PHONY: format
 format:
-	clang-format -i $(IMPL_DIR)/*.c $(MAIN_DIR)/*.c $(TEST_DIR)/*.c $(INCLUDE_DIR)/*.h 2>/dev/null || true
+	clang-format -i src/impl/*/*.c $(MAIN_DIR)/*.c $(TEST_DIR)/*.c $(INCLUDE_DIR)/*.h 2>/dev/null || true
+
+# ==============================================================================
+# Benchmark Targets
+# ==============================================================================
+
+.PHONY: build-both
+build-both: | $(BIN_DIR)
+	@echo "Building both implementations..."
+	@$(MAKE) --no-print-directory IMPL=ai
+	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_ai
+	@$(MAKE) --no-print-directory IMPL=human
+	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_human
+	@echo "Built: bin/anagram_chain_ai and bin/anagram_chain_human"
+
+.PHONY: benchmark
+benchmark:
+	@$(MAKE) --no-print-directory IMPL=both
+	@echo "Running benchmark..."
+	@python3 benchmark.py $(ARGS)
+
+# Stress test parameters (can be overridden)
+STRESS_CHAINS ?= 5000
+STRESS_LENGTH ?= 15
+STRESS_FILE ?= tests/data/stress.txt
+
+.PHONY: generate-stress
+generate-stress:
+	@echo "Generating stress test dictionary..."
+	@echo "  Chains: $(STRESS_CHAINS), Max length: $(STRESS_LENGTH)"
+	python3 tests/data/generate_stress_dict.py $(STRESS_FILE) $(STRESS_CHAINS) $(STRESS_LENGTH)
+	@echo ""
+	@echo "Usage: make benchmark ARGS='$(STRESS_FILE) <start_word> <runs>'"
 
 # ==============================================================================
 # Clean
@@ -365,9 +415,24 @@ help:
 	@echo "    clean                  - Remove build artifacts"
 	@echo "    help                   - Show this help"
 	@echo ""
+	@echo "  Benchmark:"
+	@echo "    generate-stress        - Generate stress test dictionary"
+	@echo "      STRESS_CHAINS=5000   - Number of chain groups (default: 5000)"
+	@echo "      STRESS_LENGTH=15     - Max chain length (default: 15)"
+	@echo "      STRESS_FILE=...      - Output file (default: tests/data/stress.txt)"
+	@echo "    benchmark              - Build both and run benchmark"
+	@echo ""
 	@echo "  Implementation selection:"
 	@echo "    IMPL=ai                - Use AI implementation (default)"
 	@echo "    IMPL=human             - Use human implementation"
+	@echo "    IMPL=both              - Build both: anagram_chain_ai + anagram_chain_human"
 	@echo ""
-	@echo "  Example:"
-	@echo "    make IMPL=human test   - Test with human implementation"
+	@echo "  Examples:"
+	@echo "    make                   - Build with AI (default)"
+	@echo "    make IMPL=human        - Build with human implementation"
+	@echo "    make IMPL=both         - Build both binaries for comparison"
+	@echo "    make IMPL=human test   - Test human implementation"
+	@echo "    make generate-stress   - Generate default stress dictionary"
+	@echo "    make generate-stress STRESS_CHAINS=1000 STRESS_LENGTH=10  - Small dict"
+	@echo "    make generate-stress STRESS_CHAINS=10000 STRESS_LENGTH=20 - Large dict"
+	@echo "    make benchmark ARGS='tests/data/stress.txt fu 3'"

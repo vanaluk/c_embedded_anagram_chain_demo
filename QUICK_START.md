@@ -87,6 +87,34 @@ make IMPL=ai test
 make IMPL=human test
 ```
 
+**Binary naming:**
+- `make` or `make IMPL=ai` → `bin/anagram_chain` (AI implementation)
+- `make IMPL=human` → `bin/anagram_chain` (Human implementation, same name)
+- `make IMPL=both` → `bin/anagram_chain_ai` + `bin/anagram_chain_human` (both for benchmarking)
+
+## Benchmarking
+
+Compare performance of AI vs Human implementations:
+
+```bash
+# Step 1: Generate stress test dictionary (~400k words)
+make generate-stress
+
+# Or with custom parameters:
+python3 tests/data/generate_stress_dict.py tests/data/stress.txt 5000 15
+
+# Step 2: Build both and run benchmark
+make benchmark ARGS='tests/data/stress.txt fu 3'
+
+# Or manually:
+make IMPL=both
+python3 benchmark.py tests/data/stress.txt fu 3
+```
+
+**Scripts:**
+- `tests/data/generate_stress_dict.py <output> <chains> <length>` - generate dictionary
+- `benchmark.py <dictionary> <start_word> <runs>` - compare implementations
+
 ---
 
 ## Next Steps
