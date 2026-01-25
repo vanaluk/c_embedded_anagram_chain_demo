@@ -14,10 +14,10 @@ Choose ONE of the following:
 
 ```bash
 # 1. Build Docker image
-docker build -t anagram-chain -f docker/Dockerfile .
+docker build -t anagram-chain --target runtime -f docker/Dockerfile .
 
 # 2. Run with example dictionary
-docker run --rm anagram-chain ./bin/anagram_chain /app/tests/data/example.txt abck
+docker run --rm anagram-chain tests/data/example.txt abck
 ```
 
 ---
@@ -48,6 +48,8 @@ make
 ---
 
 ## Expected Output
+
+> **Note:** The implementation is currently stubbed. The output below shows what you will see after the implementation is complete. With the stub, you will see "Error: Failed to create dictionary".
 
 ```
 Loading dictionary: tests/data/example.txt

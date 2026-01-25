@@ -230,7 +230,7 @@ $(BUILD_DIR):
 
 .PHONY: docker-build
 docker-build:
-	docker build -t anagram-chain -f docker/Dockerfile .
+	docker build -t anagram-chain --target runtime -f docker/Dockerfile .
 
 .PHONY: docker-run
 docker-run:

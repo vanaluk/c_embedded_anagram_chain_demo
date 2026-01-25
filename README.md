@@ -67,7 +67,7 @@ make
 
 ```bash
 # Build and run PC version
-docker build -t anagram-chain -f docker/Dockerfile .
+docker build -t anagram-chain --target runtime -f docker/Dockerfile .
 docker run --rm anagram-chain --help
 
 # Build and run ARM FreeRTOS version
@@ -89,6 +89,8 @@ docker run --rm anagram-chain-freertos
 | `starting_word` | Word to start the chain from (must be in dictionary) |
 
 ### Example Output
+
+> **Note:** The implementation is currently stubbed (`STUB_IMPLEMENTATION` defined in `src/include/anagram_chain.h`). Remove this define after implementing the algorithm to enable full functionality.
 
 ```
 Loading dictionary: tests/data/example.txt
@@ -167,6 +169,8 @@ make test-all
 
 ### Test Output
 
+With `STUB_IMPLEMENTATION` defined (current state):
+
 ```
 ======================================
   Anagram Chain Finder - Unit Tests
@@ -175,14 +179,22 @@ make test-all
 Running unit tests...
 
 Signature Tests:
-  [PASS] compute_signature
-  [PASS] is_derived_signature
+  [SKIP] compute_signature: stub implementation
+  [SKIP] is_derived_signature: stub implementation
 
 ...
 
 ======================================
   All tests passed!
 ======================================
+```
+
+After implementation (remove `STUB_IMPLEMENTATION`):
+
+```
+Signature Tests:
+  [PASS] compute_signature
+  [PASS] is_derived_signature
 ```
 
 ### Docker Tests
@@ -341,4 +353,7 @@ MIT License - see LICENSE file for details.
 
 ## Author
 
-Developed as an Embedded Developer test task - 2026
+**Ivan Lukianenko**
+
+- 📧 Email: [vanaluk@gmail.com](mailto:vanaluk@gmail.com)
+- 💼 LinkedIn: [linkedin.com/in/ivan-lukianenko-31502894](https://www.linkedin.com/in/ivan-lukianenko-31502894/)
