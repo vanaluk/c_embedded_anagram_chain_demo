@@ -26,23 +26,23 @@ extern "C" {
  */
 
 #ifndef MAX_WORD_LENGTH
-#define MAX_WORD_LENGTH 256    /* max 255 chars + null terminator */
+#define MAX_WORD_LENGTH 256 /* max 255 chars + null terminator */
 #endif
 
 #ifndef INITIAL_CAPACITY
-#define INITIAL_CAPACITY 1000000  /* up to 1M words in dictionary */
+#define INITIAL_CAPACITY 1000000 /* up to 1M words in dictionary */
 #endif
 
 #ifndef HASH_TABLE_SIZE
-#define HASH_TABLE_SIZE 1000003   /* prime number >= INITIAL_CAPACITY */
+#define HASH_TABLE_SIZE 1000003 /* prime number >= INITIAL_CAPACITY */
 #endif
 
 #ifndef MAX_CHAINS
-#define MAX_CHAINS 100000      /* may have many longest chains */
+#define MAX_CHAINS 100000 /* may have many longest chains */
 #endif
 
 #ifndef MAX_CHAIN_LENGTH
-#define MAX_CHAIN_LENGTH 256   /* max chain depth (255 steps + 1) */
+#define MAX_CHAIN_LENGTH 256 /* max chain depth (255 steps + 1) */
 #endif
 
 /* ============================================================================
@@ -53,7 +53,8 @@ extern "C" {
 /**
  * @brief Dictionary structure holding all words and their signatures
  */
-typedef struct {
+typedef struct
+{
     char **words;      /**< Array of word strings */
     char **signatures; /**< Parallel array of sorted signatures */
     size_t count;      /**< Number of words */
@@ -63,7 +64,8 @@ typedef struct {
 /**
  * @brief Hash table entry for signature-to-words mapping
  */
-typedef struct HashEntry {
+typedef struct HashEntry
+{
     char *signature;        /**< Key: sorted character signature */
     size_t *word_indices;   /**< Values: indices into Dictionary.words */
     size_t word_count;      /**< Number of words with this signature */
@@ -74,7 +76,8 @@ typedef struct HashEntry {
 /**
  * @brief Hash table for O(1) signature lookup
  */
-typedef struct {
+typedef struct
+{
     HashEntry **buckets; /**< Array of bucket pointers */
     size_t bucket_count; /**< Number of buckets */
     size_t entry_count;  /**< Total unique signatures */
@@ -83,7 +86,8 @@ typedef struct {
 /**
  * @brief A single chain of words
  */
-typedef struct {
+typedef struct
+{
     size_t *indices; /**< Word indices in chain order */
     size_t length;   /**< Chain length */
 } Chain;
@@ -91,7 +95,8 @@ typedef struct {
 /**
  * @brief Collection of found chains
  */
-typedef struct {
+typedef struct
+{
     Chain *chains;     /**< Array of chains */
     size_t count;      /**< Number of chains */
     size_t capacity;   /**< Allocated capacity */

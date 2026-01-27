@@ -207,4 +207,3 @@ int load_dictionary(const char *fname, Dictionary *dict)
     return n;
 #endif
 }
-

@@ -24,43 +24,51 @@
 
 #ifdef STUB_IMPLEMENTATION
 
-int test_compute_signature(void) {
+int test_compute_signature(void)
+{
     TEST_SKIP("compute_signature", "stub implementation");
     return 0;
 }
 
-int test_is_derived_signature(void) {
+int test_is_derived_signature(void)
+{
     TEST_SKIP("is_derived_signature", "stub implementation");
     return 0;
 }
 
-int test_is_valid_word(void) {
+int test_is_valid_word(void)
+{
     TEST_SKIP("is_valid_word", "stub implementation");
     return 0;
 }
 
-int test_dictionary_operations(void) {
+int test_dictionary_operations(void)
+{
     TEST_SKIP("dictionary_operations", "stub implementation");
     return 0;
 }
 
-int test_hashtable_operations(void) {
+int test_hashtable_operations(void)
+{
     TEST_SKIP("hashtable_operations", "stub implementation");
     return 0;
 }
 
-int test_example_chain(void) {
+int test_example_chain(void)
+{
     TEST_SKIP("example_chain", "stub implementation");
     return 0;
 }
 
 #if !defined(PLATFORM_ARM)
-int test_performance_small(void) {
+int test_performance_small(void)
+{
     TEST_SKIP("performance_small", "stub implementation");
     return 0;
 }
 
-int test_performance_example(void) {
+int test_performance_example(void)
+{
     TEST_SKIP("performance_example", "stub implementation");
     return 0;
 }
@@ -73,11 +81,13 @@ int test_performance_example(void) {
  * ============================================================================
  */
 
-int test_compute_signature(void) {
+int test_compute_signature(void)
+{
     const char *name = "compute_signature";
 
     char *sig1 = compute_signature("sail");
-    if (!sig1) {
+    if (!sig1)
+    {
         TEST_SKIP(name, "not implemented");
         return 0;
     }
@@ -119,7 +129,8 @@ int test_compute_signature(void) {
  * ============================================================================
  */
 
-int test_is_derived_signature(void) {
+int test_is_derived_signature(void)
+{
     const char *name = "is_derived_signature";
 
     /* Valid derived signatures */
@@ -150,7 +161,8 @@ int test_is_derived_signature(void) {
  * ============================================================================
  */
 
-int test_is_valid_word(void) {
+int test_is_valid_word(void)
+{
     const char *name = "is_valid_word";
 
     /* Valid words */
@@ -173,11 +185,13 @@ int test_is_valid_word(void) {
  * ============================================================================
  */
 
-int test_dictionary_operations(void) {
+int test_dictionary_operations(void)
+{
     const char *name = "dictionary_operations";
 
     Dictionary *dict = dictionary_create(4);
-    if (!dict) {
+    if (!dict)
+    {
         TEST_SKIP(name, "not implemented");
         return 0;
     }
@@ -209,11 +223,13 @@ int test_dictionary_operations(void) {
  * ============================================================================
  */
 
-int test_hashtable_operations(void) {
+int test_hashtable_operations(void)
+{
     const char *name = "hashtable_operations";
 
     HashTable *ht = hashtable_create(101);
-    if (!ht) {
+    if (!ht)
+    {
         TEST_SKIP(name, "not implemented");
         return 0;
     }
@@ -246,12 +262,14 @@ int test_hashtable_operations(void) {
  * ============================================================================
  */
 
-int test_example_chain(void) {
+int test_example_chain(void)
+{
     const char *name = "example_chain";
 
     /* Create dictionary from task example */
     Dictionary *dict = dictionary_create(16);
-    if (!dict) {
+    if (!dict)
+    {
         TEST_SKIP(name, "not implemented");
         return 0;
     }
@@ -260,7 +278,8 @@ int test_example_chain(void) {
                            "abck",   "abc",      "abcdp",  "abcdghi",
                            "bafced", "akjpqwmn", "abcelk", "baclekt"};
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 12; i++)
+    {
         dictionary_add(dict, words[i]);
     }
 
@@ -274,16 +293,19 @@ int test_example_chain(void) {
 
     /* Verify the chain: abck -> abcek -> abcelk -> baclekt */
     int found_expected_chain = 0;
-    for (size_t i = 0; i < results->count; i++) {
+    for (size_t i = 0; i < results->count; i++)
+    {
         Chain *chain = &results->chains[i];
-        if (chain->length == 4) {
+        if (chain->length == 4)
+        {
             const char *w0 = dict->words[chain->indices[0]];
             const char *w1 = dict->words[chain->indices[1]];
             const char *w2 = dict->words[chain->indices[2]];
             const char *w3 = dict->words[chain->indices[3]];
 
             if (strcmp(w0, "abck") == 0 && strcmp(w1, "abcek") == 0 &&
-                strcmp(w2, "abcelk") == 0 && strcmp(w3, "baclekt") == 0) {
+                strcmp(w2, "abcelk") == 0 && strcmp(w3, "baclekt") == 0)
+            {
                 found_expected_chain = 1;
                 break;
             }
@@ -309,27 +331,31 @@ int test_example_chain(void) {
 
 #define SMALL_DICT_TIME_LIMIT_MS 1000.0
 
-int test_performance_small(void) {
+int test_performance_small(void)
+{
     const char *name = "performance_small";
 
     double start = timer_now();
 
     Dictionary *dict = dictionary_create(64);
-    if (!dict) {
+    if (!dict)
+    {
         TEST_SKIP(name, "not implemented");
         return 0;
     }
 
     int loaded = load_dictionary("tests/data/small.txt", dict);
 
-    if (loaded < 0) {
+    if (loaded < 0)
+    {
         TEST_SKIP(name, "test file not found");
         dictionary_free(dict);
         return 0;
     }
 
     HashTable *index = build_index(dict);
-    if (dict->count > 0) {
+    if (dict->count > 0)
+    {
         ChainResults *results =
             find_longest_chains(index, dict, dict->words[0]);
         chain_results_free(results);
@@ -351,20 +377,23 @@ int test_performance_small(void) {
     return 0;
 }
 
-int test_performance_example(void) {
+int test_performance_example(void)
+{
     const char *name = "performance_example";
 
     double start = timer_now();
 
     Dictionary *dict = dictionary_create(16);
-    if (!dict) {
+    if (!dict)
+    {
         TEST_SKIP(name, "not implemented");
         return 0;
     }
 
     int loaded = load_dictionary("tests/data/example.txt", dict);
 
-    if (loaded < 0) {
+    if (loaded < 0)
+    {
         TEST_SKIP(name, "test file not found");
         dictionary_free(dict);
         return 0;
@@ -403,7 +432,8 @@ int test_performance_example(void) {
  * ============================================================================
  */
 
-int run_all_tests(void) {
+int run_all_tests(void)
+{
     int failures = 0;
 
     test_puts("\n");
@@ -439,9 +469,12 @@ int run_all_tests(void) {
 #endif
 
     test_puts("\n======================================\n");
-    if (failures == 0) {
+    if (failures == 0)
+    {
         test_puts("  All tests passed!\n");
-    } else {
+    }
+    else
+    {
         test_puts("  ");
         test_putint(failures);
         test_puts(" test(s) FAILED\n");

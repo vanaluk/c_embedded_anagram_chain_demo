@@ -6,7 +6,8 @@
 #include "test_runner.h"
 #include "uart.h"
 
-int main(void) {
+int main(void)
+{
     /* Initialize UART for output */
     uart_init();
 
@@ -19,16 +20,20 @@ int main(void) {
     int failures = run_all_tests();
 
     uart_puts("\nTest run complete. ");
-    if (failures == 0) {
+    if (failures == 0)
+    {
         uart_puts("SUCCESS!\n");
-    } else {
+    }
+    else
+    {
         uart_puts("FAILURES: ");
         uart_putint(failures);
         uart_puts("\n");
     }
 
     /* Halt - use Ctrl+A X to exit QEMU */
-    while (1) {
+    while (1)
+    {
         /* Loop forever */
     }
 
