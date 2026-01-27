@@ -13,9 +13,15 @@
 #   IMPL=human     - Use human implementation
 #   IMPL=both      - Build both implementations (for benchmarking)
 #
-# Example:
-#   make IMPL=human test   - Build and test with human implementation
-#   make IMPL=both         - Build bin/anagram_chain_ai and bin/anagram_chain_human
+# Memory mode (for human implementation only):
+#   MEM=static     - Static memory pools (default, for embedded)
+#   MEM=dynamic    - Dynamic memory allocation (optimized bulk alloc)
+#
+# Examples:
+#   make IMPL=human                      - Build human impl with static memory
+#   make IMPL=human MEM=dynamic          - Build human impl with dynamic memory
+#   make IMPL=human MEM=dynamic arm-baremetal  - ARM with dynamic memory
+#   make IMPL=both                       - Build ai and human-static for benchmarking
 
 # ==============================================================================
 # Compilers
@@ -31,6 +37,10 @@ CC_ARM_NONE = arm-none-eabi-gcc
 # IMPL can be 'ai', 'human', or 'both' (default: ai)
 IMPL ?= ai
 
+# MEM can be 'static' or 'dynamic' (default: static)
+# Only applies to human implementation; ai always uses dynamic
+MEM ?= static
+
 # Handle IMPL=both specially
 ifeq ($(IMPL),both)
     BUILD_BOTH := 1
@@ -39,6 +49,21 @@ ifeq ($(IMPL),both)
 else
     BUILD_BOTH := 0
     IMPL_DIR_RESOLVED = $(SRC_DIR)/impl/$(IMPL)
+endif
+
+# Memory mode and implementation-specific flags
+ifeq ($(IMPL),ai)
+    # AI implementation marker
+    IMPL_FLAGS = -DIMPL_AI
+    MEM_FLAGS =
+else
+    # Human implementation - memory mode is configurable
+    IMPL_FLAGS =
+    ifeq ($(MEM),dynamic)
+        MEM_FLAGS = -DUSE_DYNAMIC_MEMORY
+    else
+        MEM_FLAGS =
+    endif
 endif
 
 # ==============================================================================
@@ -64,22 +89,23 @@ INCLUDES_ARM = $(INCLUDES) -I$(ARM_DIR)
 
 # PC flags
 # _DEFAULT_SOURCE enables POSIX/BSD/System V extensions (includes clock_gettime)
-CFLAGS = -Wall -Wextra -std=c11 -O2 -D_DEFAULT_SOURCE $(INCLUDES)
-CFLAGS_DEBUG = -Wall -Wextra -std=c11 -g -O0 -DDEBUG -D_DEFAULT_SOURCE $(INCLUDES)
+# -mcmodel=large needed for static arrays > 2GB (human impl with 1M words)
+CFLAGS = -Wall -Wextra -std=c11 -O2 -D_DEFAULT_SOURCE -mcmodel=large $(IMPL_FLAGS) $(MEM_FLAGS) $(INCLUDES)
+CFLAGS_DEBUG = -Wall -Wextra -std=c11 -g -O0 -DDEBUG -D_DEFAULT_SOURCE -mcmodel=large $(IMPL_FLAGS) $(MEM_FLAGS) $(INCLUDES)
 
 # ARM bare-metal flags
 CFLAGS_ARM_BAREMETAL = -Wall -Wextra -std=c11 -O2 -g \
     -mcpu=cortex-m3 -mthumb -mfloat-abi=soft \
     -ffunction-sections -fdata-sections \
     -specs=nano.specs -specs=nosys.specs \
-    -DPLATFORM_ARM \
+    -DPLATFORM_ARM $(IMPL_FLAGS) $(MEM_FLAGS) \
     $(INCLUDES_ARM)
 
 # ARM bare-metal debug flags
 CFLAGS_ARM_DEBUG = -Wall -Wextra -std=c11 -O0 -g3 -DDEBUG \
     -mcpu=cortex-m3 -mthumb -mfloat-abi=soft \
     -specs=nano.specs -specs=nosys.specs \
-    $(INCLUDES_ARM)
+    $(IMPL_FLAGS) $(MEM_FLAGS) $(INCLUDES_ARM)
 
 LDFLAGS_ARM_BAREMETAL = -T $(ARM_DIR)/linker.ld \
     -Wl,--gc-sections \
@@ -89,8 +115,13 @@ LDFLAGS_ARM_BAREMETAL = -T $(ARM_DIR)/linker.ld \
 # Source Files
 # ==============================================================================
 
-# Implementation (library)
+# Implementation source files
+# Human implementation is split into main (memory modes) and internal (common functions)
+ifeq ($(IMPL),human)
+IMPL_SRC = $(IMPL_DIR)/anagram_chain.c $(IMPL_DIR)/anagram_chain_internal.c
+else
 IMPL_SRC = $(IMPL_DIR)/anagram_chain.c
+endif
 
 # Main files for each target
 MAIN_PC_SRC = $(MAIN_DIR)/main_pc.c
@@ -106,6 +137,9 @@ TEST_PC_SRC = $(TEST_DIR)/test_main_pc.c
 TEST_ARM_SRC = $(TEST_DIR)/test_main_arm.c
 TEST_FREERTOS_SRC = $(TEST_DIR)/test_main_freertos.c
 TEST_INCLUDES = -I$(TEST_DIR) -I$(INCLUDE_DIR)
+
+# Test flags inherit from implementation flags
+TEST_CFLAGS = $(IMPL_FLAGS) $(MEM_FLAGS)
 
 # FreeRTOS sources (downloaded by Docker)
 FREERTOS_DIR ?= $(ARM_DIR)/freertos/FreeRTOS-Kernel
@@ -153,7 +187,7 @@ endif
 
 $(TARGET_PC): $(MAIN_PC_SRC) $(IMPL_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $(MAIN_PC_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC native, impl=$(IMPL))"
+	@echo "Built: $@ (PC native, impl=$(IMPL), mem=$(MEM))"
 
 # ==============================================================================
 # PC Debug Build
@@ -164,7 +198,7 @@ debug: $(TARGET_PC_DEBUG)
 
 $(TARGET_PC_DEBUG): $(MAIN_PC_SRC) $(IMPL_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS_DEBUG) -o $@ $(MAIN_PC_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (PC debug, impl=$(IMPL))"
+	@echo "Built: $@ (PC debug, impl=$(IMPL), mem=$(MEM))"
 
 # ==============================================================================
 # ARM Bare-metal Build
@@ -176,7 +210,7 @@ arm-baremetal: $(TARGET_ARM_ELF)
 $(TARGET_ARM_ELF): $(MAIN_ARM_SRC) $(IMPL_SRC) $(ARM_SRCS) | $(BIN_DIR)
 	$(CC_ARM_NONE) $(CFLAGS_ARM_BAREMETAL) $(LDFLAGS_ARM_BAREMETAL) \
 		-o $@ $(ARM_SRCS) $(MAIN_ARM_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (ARM Cortex-M3 bare-metal)"
+	@echo "Built: $@ (ARM Cortex-M3 bare-metal, impl=$(IMPL), mem=$(MEM))"
 	@arm-none-eabi-size $@ 2>/dev/null || true
 
 # ==============================================================================
@@ -191,7 +225,7 @@ $(TARGET_FREERTOS_ELF): $(MAIN_FREERTOS_SRC) $(IMPL_SRC) $(ARM_SRCS) $(FREERTOS_
 		$(FREERTOS_INCLUDES) \
 		-o $@ $(ARM_DIR)/startup.s $(ARM_DIR)/uart.c $(ARM_DIR)/syscalls.c \
 		$(FREERTOS_SRCS) $(MAIN_FREERTOS_SRC) $(IMPL_SRC)
-	@echo "Built: $@ (ARM Cortex-M3 + FreeRTOS)"
+	@echo "Built: $@ (ARM Cortex-M3 + FreeRTOS, impl=$(IMPL), mem=$(MEM))"
 	@arm-none-eabi-size $@ 2>/dev/null || true
 
 # ==============================================================================
@@ -204,7 +238,7 @@ test: $(TARGET_TEST_PC)
 	@./$(TARGET_TEST_PC)
 
 $(TARGET_TEST_PC): $(TEST_PC_SRC) $(TEST_CORE_SRC) $(IMPL_SRC) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(TEST_INCLUDES) -o $@ $(TEST_PC_SRC) $(TEST_CORE_SRC) $(IMPL_SRC)
+	$(CC) $(CFLAGS) $(TEST_INCLUDES) $(TEST_CFLAGS) -o $@ $(TEST_PC_SRC) $(TEST_CORE_SRC) $(IMPL_SRC)
 	@echo "Built: $@ (PC tests, impl=$(IMPL))"
 
 # ==============================================================================
@@ -247,6 +281,52 @@ $(TARGET_TEST_FREERTOS): $(TEST_FREERTOS_SRC) $(TEST_CORE_SRC) $(IMPL_SRC) $(ARM
 .PHONY: test-all
 test-all: test test-arm test-freertos
 	@echo "All platform tests completed"
+
+# ==============================================================================
+# Check All Builds - verify all implementation/platform combinations compile
+# ==============================================================================
+
+.PHONY: check
+check:
+	@echo "========================================"
+	@echo "  Checking all build configurations"
+	@echo "========================================"
+	@echo ""
+	@rm -rf build bin
+	@# AI implementation (dynamic memory only)
+	@echo "[1/9] AI - PC..."
+	@$(MAKE) --no-print-directory IMPL=ai test > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@echo "[2/9] AI - ARM bare-metal..."
+	@$(MAKE) --no-print-directory IMPL=ai arm-baremetal > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@echo "[3/9] AI - ARM FreeRTOS..."
+	@$(MAKE) --no-print-directory IMPL=ai arm-freertos > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@# Human implementation - static memory
+	@echo "[4/9] Human (static) - PC..."
+	@$(MAKE) --no-print-directory IMPL=human MEM=static test > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@echo "[5/9] Human (static) - ARM bare-metal..."
+	@$(MAKE) --no-print-directory IMPL=human MEM=static arm-baremetal > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@echo "[6/9] Human (static) - ARM FreeRTOS..."
+	@$(MAKE) --no-print-directory IMPL=human MEM=static arm-freertos > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@# Human implementation - dynamic memory
+	@echo "[7/9] Human (dynamic) - PC..."
+	@$(MAKE) --no-print-directory IMPL=human MEM=dynamic test > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@echo "[8/9] Human (dynamic) - ARM bare-metal..."
+	@$(MAKE) --no-print-directory IMPL=human MEM=dynamic arm-baremetal > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@echo "[9/9] Human (dynamic) - ARM FreeRTOS..."
+	@$(MAKE) --no-print-directory IMPL=human MEM=dynamic arm-freertos > /dev/null 2>&1 && echo "  PASS" || (echo "  FAIL"; exit 1)
+	@rm -rf build bin
+	@echo ""
+	@echo "========================================"
+	@echo "  All 9 configurations PASSED"
+	@echo "========================================"
 
 # ==============================================================================
 # Create Directories
@@ -333,7 +413,7 @@ run-freertos: $(TARGET_FREERTOS_ELF)
 
 .PHONY: format
 format:
-	clang-format -i src/impl/*/*.c $(MAIN_DIR)/*.c $(TEST_DIR)/*.c $(INCLUDE_DIR)/*.h 2>/dev/null || true
+	find src tests -name '*.c' -o -name '*.h' | xargs clang-format -i
 
 # ==============================================================================
 # Benchmark Targets
@@ -348,16 +428,29 @@ build-both: | $(BIN_DIR)
 	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_human
 	@echo "Built: bin/anagram_chain_ai and bin/anagram_chain_human"
 
+# Build all three implementations for benchmarking
+.PHONY: build-all
+build-all: | $(BIN_DIR)
+	@echo "Building all three implementations..."
+	@$(MAKE) --no-print-directory IMPL=ai
+	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_ai
+	@$(MAKE) --no-print-directory IMPL=human MEM=static
+	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_human-static
+	@$(MAKE) --no-print-directory IMPL=human MEM=dynamic
+	@mv $(TARGET_PC) $(BIN_DIR)/anagram_chain_human-dynamic
+	@echo "Built: bin/anagram_chain_ai, bin/anagram_chain_human-static, bin/anagram_chain_human-dynamic"
+
 .PHONY: benchmark
 benchmark:
-	@$(MAKE) --no-print-directory IMPL=both
-	@echo "Running benchmark..."
+	@echo "Running benchmark (builds all implementations automatically)..."
 	@python3 benchmark.py $(ARGS)
 
 # Stress test parameters (can be overridden)
 STRESS_CHAINS ?= 5000
 STRESS_LENGTH ?= 15
 STRESS_FILE ?= tests/data/stress.txt
+STRESS_WORD ?= fu
+STRESS_RUNS ?= 3
 
 .PHONY: generate-stress
 generate-stress:
@@ -366,6 +459,54 @@ generate-stress:
 	python3 tests/data/generate_stress_dict.py $(STRESS_FILE) $(STRESS_CHAINS) $(STRESS_LENGTH)
 	@echo ""
 	@echo "Usage: make benchmark ARGS='$(STRESS_FILE) <start_word> <runs>'"
+
+# Run stress test with current IMPL (ai or human)
+.PHONY: stress
+stress: $(TARGET_PC)
+	@echo "Running stress test with IMPL=$(IMPL)..."
+	@echo "Dictionary: $(STRESS_FILE), Start: $(STRESS_WORD), Runs: $(STRESS_RUNS)"
+	@echo ""
+	@for i in $$(seq 1 $(STRESS_RUNS)); do \
+		echo "=== Run $$i/$(STRESS_RUNS) ==="; \
+		./$(TARGET_PC) $(STRESS_FILE) $(STRESS_WORD); \
+		echo ""; \
+	done
+
+# ==============================================================================
+# Code Quality / Lint
+# ==============================================================================
+
+.PHONY: lint
+lint:
+	@echo "========================================"
+	@echo "  Running static analysis"
+	@echo "========================================"
+	@echo ""
+	@echo "=== clang-format (check only) ==="
+	@find src tests -name '*.c' -o -name '*.h' | xargs clang-format --dry-run --Werror 2>&1 || echo "  Formatting issues found"
+	@echo ""
+	@echo "=== cppcheck ==="
+	@cppcheck --enable=warning,style,performance,portability \
+		--suppress=missingIncludeSystem \
+		--suppress=unusedFunction \
+		--error-exitcode=0 \
+		--inline-suppr \
+		-I src/include \
+		src/ tests/ 2>&1 || true
+	@echo ""
+	@echo "=== clang-tidy (human implementation) ==="
+	@clang-tidy src/impl/human/*.c src/main/main_pc.c \
+		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
+		-- -I src/include -I src/impl/human -std=c11 2>&1 || true
+	@echo ""
+	@echo "=== clang-tidy (AI implementation) ==="
+	@clang-tidy src/impl/ai/*.c \
+		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
+		-- -I src/include -std=c11 -DIMPL_AI 2>&1 || true
+	@echo ""
+	@echo "========================================"
+	@echo "  Static analysis complete"
+	@echo "========================================"
 
 # ==============================================================================
 # Clean
@@ -412,6 +553,8 @@ help:
 	@echo ""
 	@echo "  Utilities:"
 	@echo "    format                 - Format code with clang-format"
+	@echo "    lint                   - Run static analysis (cppcheck, clang-tidy)"
+	@echo "    check                  - Build and test all 9 configurations"
 	@echo "    clean                  - Remove build artifacts"
 	@echo "    help                   - Show this help"
 	@echo ""
@@ -420,7 +563,10 @@ help:
 	@echo "      STRESS_CHAINS=5000   - Number of chain groups (default: 5000)"
 	@echo "      STRESS_LENGTH=15     - Max chain length (default: 15)"
 	@echo "      STRESS_FILE=...      - Output file (default: tests/data/stress.txt)"
-	@echo "    benchmark              - Build both and run benchmark"
+	@echo "    stress                 - Run stress test with current IMPL"
+	@echo "      STRESS_WORD=fu       - Start word (default: fu)"
+	@echo "      STRESS_RUNS=3        - Number of runs (default: 3)"
+	@echo "    benchmark              - Build both and compare AI vs Human"
 	@echo ""
 	@echo "  Implementation selection:"
 	@echo "    IMPL=ai                - Use AI implementation (default)"
@@ -434,5 +580,6 @@ help:
 	@echo "    make IMPL=human test   - Test human implementation"
 	@echo "    make generate-stress   - Generate default stress dictionary"
 	@echo "    make generate-stress STRESS_CHAINS=1000 STRESS_LENGTH=10  - Small dict"
-	@echo "    make generate-stress STRESS_CHAINS=10000 STRESS_LENGTH=20 - Large dict"
-	@echo "    make benchmark ARGS='tests/data/stress.txt fu 3'"
+	@echo "    make IMPL=human stress - Run stress test with human impl"
+	@echo "    make IMPL=ai stress    - Run stress test with AI impl"
+	@echo "    make benchmark ARGS='tests/data/stress.txt fu 3' - Compare both"

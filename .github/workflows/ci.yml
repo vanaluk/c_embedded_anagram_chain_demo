@@ -132,11 +132,37 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install clang-format
+    - name: Install analysis tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang-format
+        sudo apt-get install -y clang-format clang-tidy cppcheck
 
-    - name: Check formatting
+    - name: Check formatting (clang-format)
       run: |
+        echo "=== Checking code formatting ==="
         find src tests -name '*.c' -o -name '*.h' | xargs clang-format --dry-run --Werror 2>&1 || echo "Formatting issues found (non-blocking)"
+
+    - name: Static analysis (cppcheck)
+      run: |
+        echo "=== Running cppcheck ==="
+        cppcheck --enable=warning,style,performance,portability \
+                 --suppress=missingIncludeSystem \
+                 --suppress=unusedFunction \
+                 --error-exitcode=0 \
+                 --inline-suppr \
+                 -I src/include \
+                 src/ tests/ 2>&1 || echo "cppcheck completed with warnings"
+
+    - name: Static analysis (clang-tidy) - human implementation
+      run: |
+        echo "=== Running clang-tidy on human implementation ==="
+        clang-tidy src/impl/human/*.c src/main/main_pc.c \
+                   -checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
+                   -- -I src/include -I src/impl/human -std=c11 2>&1 || echo "clang-tidy completed with warnings"
+
+    - name: Static analysis (clang-tidy) - AI implementation
+      run: |
+        echo "=== Running clang-tidy on AI implementation ==="
+        clang-tidy src/impl/ai/*.c \
+                   -checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
+                   -- -I src/include -std=c11 -DIMPL_AI 2>&1 || echo "clang-tidy completed with warnings"

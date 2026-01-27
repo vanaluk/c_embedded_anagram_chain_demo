@@ -11,16 +11,19 @@
 
 #include "anagram_chain.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     /* Handle --help flag */
     if (argc == 2 &&
-        (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
+        (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0))
+    {
         print_usage(argv[0]);
         return 0;
     }
 
     /* Validate arguments */
-    if (argc != 3) {
+    if (argc != 3)
+    {
         print_usage(argv[0]);
         return 1;
     }
@@ -36,13 +39,15 @@ int main(int argc, char *argv[]) {
     double load_start = timer_now();
 
     Dictionary *dict = dictionary_create(INITIAL_CAPACITY);
-    if (!dict) {
+    if (!dict)
+    {
         fprintf(stderr, "Error: Failed to create dictionary\n");
         return 1;
     }
 
     int loaded = load_dictionary(dict_file, dict);
-    if (loaded < 0) {
+    if (loaded < 0)
+    {
         dictionary_free(dict);
         return 1;
     }
@@ -51,7 +56,8 @@ int main(int argc, char *argv[]) {
     printf("Words loaded: %zu\n", dict->count);
 
     /* Verify start word exists */
-    if (find_word_index(dict, start_word) < 0) {
+    if (find_word_index(dict, start_word) < 0)
+    {
         fprintf(stderr, "Error: Starting word '%s' not found in dictionary\n",
                 start_word);
         dictionary_free(dict);
@@ -62,7 +68,8 @@ int main(int argc, char *argv[]) {
     printf("\nBuilding index...\n");
     double index_start = timer_now();
     HashTable *index = build_index(dict);
-    if (!index) {
+    if (!index)
+    {
         fprintf(stderr, "Error: Failed to build index\n");
         dictionary_free(dict);
         return 1;

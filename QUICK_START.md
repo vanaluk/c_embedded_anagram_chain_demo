@@ -75,50 +75,51 @@ Total execution time: Total: 0.187 ms
 make test
 ```
 
-## Implementation Selection
-
-The project has two implementations:
+## Code Quality
 
 ```bash
-# AI implementation (default, fully working)
-make IMPL=ai test
+# Run static analysis (clang-format, cppcheck, clang-tidy)
+make lint
 
-# Human implementation (TODO stubs for manual implementation)
-make IMPL=human test
+# Verify all 9 build configurations compile and tests pass
+make check
 ```
 
-**Binary naming:**
-- `make` or `make IMPL=ai` → `bin/anagram_chain` (AI implementation)
-- `make IMPL=human` → `bin/anagram_chain` (Human implementation, same name)
-- `make IMPL=both` → `bin/anagram_chain_ai` + `bin/anagram_chain_human` (both for benchmarking)
+## Implementation Selection
+
+The project has two implementations with different memory modes:
+
+```bash
+# AI implementation (default, dynamic memory)
+make IMPL=ai test
+
+# Human implementation (static memory, for embedded)
+make IMPL=human test
+
+# Human implementation (dynamic memory, optimized)
+make IMPL=human MEM=dynamic test
+```
+
+**Build commands:**
+- `make` or `make IMPL=ai` → AI implementation (dynamic memory)
+- `make IMPL=human` → Human implementation (static memory)
+- `make IMPL=human MEM=dynamic` → Human implementation (dynamic memory)
+- `make build-all` → All three for benchmarking
 
 ## Benchmarking
 
-Compare performance of AI vs Human implementations:
+See [BENCHMARK.md](BENCHMARK.md) for detailed guide.
 
 ```bash
-# Step 1: Generate stress test dictionary (~400k words)
 make generate-stress
-
-# Or with custom parameters:
-python3 tests/data/generate_stress_dict.py tests/data/stress.txt 5000 15
-
-# Step 2: Build both and run benchmark
 make benchmark ARGS='tests/data/stress.txt fu 3'
-
-# Or manually:
-make IMPL=both
-python3 benchmark.py tests/data/stress.txt fu 3
 ```
-
-**Scripts:**
-- `tests/data/generate_stress_dict.py <output> <chains> <length>` - generate dictionary
-- `benchmark.py <dictionary> <start_word> <runs>` - compare implementations
 
 ---
 
 ## Next Steps
 
 - See [README.md](README.md) for full documentation
+- See [BENCHMARK.md](BENCHMARK.md) for benchmark guide
 - See [docs/algorithm.md](docs/algorithm.md) for algorithm details
 - Try with your own dictionary file!
