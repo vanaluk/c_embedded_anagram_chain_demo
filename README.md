@@ -129,36 +129,42 @@ Total execution time: Total: 0.257 ms
 
 ### Implementation Selection
 
-The project has two implementations:
+The project has two implementations with different memory modes:
 
-| Implementation | Description | Command |
-|----------------|-------------|---------|
-| `ai` (default) | AI-generated, fully working | `make IMPL=ai` |
-| `human` | Skeleton with TODO stubs | `make IMPL=human` |
+| Implementation | Memory Mode | Description |
+|----------------|-------------|-------------|
+| `ai` | Dynamic only | AI-generated, uses malloc/free per word |
+| `human` | Static (default) | Pre-allocated pools, no malloc at runtime |
+| `human` | Dynamic | Optimized bulk allocation, fewer malloc calls |
 
-**Binary naming:**
+**Note:** AI implementation only supports dynamic memory allocation.
+
+**Build commands:**
 
 | Command | Output Binary | Description |
 |---------|---------------|-------------|
-| `make` | `bin/anagram_chain` | Default build (AI impl) |
+| `make` | `bin/anagram_chain` | Default build (AI impl, dynamic) |
 | `make IMPL=ai` | `bin/anagram_chain` | Same as default |
-| `make IMPL=human` | `bin/anagram_chain` | Human impl, same name |
-| `make IMPL=both` | `bin/anagram_chain_ai` + `bin/anagram_chain_human` | Both binaries for benchmarking |
-
-Regular builds always produce `bin/anagram_chain`. Use `make IMPL=both` when you need both implementations side-by-side for comparison.
+| `make IMPL=human` | `bin/anagram_chain` | Human impl, static memory |
+| `make IMPL=human MEM=static` | `bin/anagram_chain` | Human impl, static (explicit) |
+| `make IMPL=human MEM=dynamic` | `bin/anagram_chain` | Human impl, dynamic memory |
+| `make build-all` | 3 binaries | All implementations for benchmarking |
 
 ```bash
-# Build with AI implementation (default)
+# Build with AI implementation (default, dynamic memory)
 make
 
-# Build with human implementation
+# Build with human implementation (static memory, for embedded)
 make IMPL=human
+
+# Build with human implementation (dynamic memory, optimized)
+make IMPL=human MEM=dynamic
 
 # Test with human implementation
 make IMPL=human test
 
-# Build both for benchmarking
-make IMPL=both
+# Build all three for benchmarking
+make build-all
 ```
 
 ### Benchmarking
@@ -166,12 +172,13 @@ make IMPL=both
 See [BENCHMARK.md](BENCHMARK.md) for detailed benchmark guide.
 
 ```bash
-# Quick start
+# Quick start - compare all 3 implementations
 make generate-stress
 make benchmark ARGS='tests/data/stress.txt fu 3'
 
 # Run single implementation
-make IMPL=human stress
+make IMPL=human stress                  # static memory
+make IMPL=human MEM=dynamic stress      # dynamic memory
 ```
 
 ### ARM Bare-metal Build
@@ -306,9 +313,11 @@ Where n = word count, m = average word length
 │   │   └── anagram_chain.h     # API definitions
 │   ├── impl/                   # Implementation files
 │   │   ├── ai/                 # AI-generated implementation
-│   │   │   └── anagram_chain.c # Complete working solution
-│   │   └── human/              # Human implementation (TODO stubs)
-│   │       └── anagram_chain.c # Skeleton for manual implementation
+│   │   │   └── anagram_chain.c # Dynamic memory only
+│   │   └── human/              # Human-optimized implementation
+│   │       ├── anagram_chain.c # Static/dynamic memory modes
+│   │       ├── config.h        # Memory pool configuration
+│   │       └── trace.h         # Debug tracing support
 │   └── main/                   # Entry points
 │       ├── main_pc.c           # PC main
 │       ├── main_arm.c          # ARM bare-metal main

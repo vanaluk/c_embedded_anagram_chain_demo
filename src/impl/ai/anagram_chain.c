@@ -12,7 +12,13 @@
  *
  * Time complexity: O(n * m * log(m)) for indexing, O(chains * depth) for search
  * Space complexity: O(n * m) where n = word count, m = avg word length
+ *
+ * NOTE: AI implementation only supports dynamic memory allocation.
  */
+
+#if !defined(IMPL_AI)
+#error "AI implementation requires IMPL_AI define. Build with IMPL=ai."
+#endif
 
 #include "anagram_chain.h"
 

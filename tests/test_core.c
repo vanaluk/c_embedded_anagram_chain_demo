@@ -82,23 +82,33 @@ int test_compute_signature(void) {
         return 0;
     }
     ASSERT_STR_EQ(sig1, "ails", name, "sail -> ails");
+#ifdef IMPL_AI
     free(sig1);
+#endif
 
     char *sig2 = compute_signature("nails");
     ASSERT_STR_EQ(sig2, "ailns", name, "nails -> ailns");
+#ifdef IMPL_AI
     free(sig2);
+#endif
 
     char *sig3 = compute_signature("aliens");
     ASSERT_STR_EQ(sig3, "aeilns", name, "aliens -> aeilns");
+#ifdef IMPL_AI
     free(sig3);
+#endif
 
     char *sig4 = compute_signature("abc");
     ASSERT_STR_EQ(sig4, "abc", name, "abc -> abc (already sorted)");
+#ifdef IMPL_AI
     free(sig4);
+#endif
 
     char *sig5 = compute_signature("cba");
     ASSERT_STR_EQ(sig5, "abc", name, "cba -> abc");
+#ifdef IMPL_AI
     free(sig5);
+#endif
 
     TEST_PASS(name);
     return 0;

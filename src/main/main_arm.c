@@ -38,22 +38,45 @@ static const char *start_word = "abck";
 #define SYSTICK_VAL (*(volatile unsigned int *)0xE000E018)
 
 #define SYSTICK_ENABLE (1 << 0)
-#define SYSTICK_CLKSRC (1 << 2) /* Use processor clock */
+#define SYSTICK_TICKINT (1 << 1) /* Enable interrupt */
+#define SYSTICK_CLKSRC (1 << 2)  /* Use processor clock */
 
-static volatile unsigned int systick_overflows = 0;
+/* LM3S6965 runs at 12 MHz in QEMU */
+#define CPU_FREQ_HZ 12000000
+#define SYSTICK_1MS (CPU_FREQ_HZ / 1000)
+#define TICKS_PER_US (CPU_FREQ_HZ / 1000000) /* 12 ticks per microsecond */
 
-void SysTick_Handler(void) { systick_overflows++; }
+static volatile unsigned int systick_ms = 0;
+
+/* Trace tick counter in microseconds (declared in trace.h) */
+extern volatile unsigned int g_trace_tick_us;
+
+void SysTick_Handler(void) { systick_ms++; }
+
+/* Get current time in microseconds */
+static unsigned int timer_arm_get_us(void) {
+    unsigned int ms, val;
+    /* Read atomically */
+    do {
+        ms = systick_ms;
+        val = SYSTICK_VAL;
+    } while (ms != systick_ms);
+
+    /* Calculate microseconds within current ms */
+    unsigned int us_in_ms = (SYSTICK_1MS - 1 - val) / TICKS_PER_US;
+    return ms * 1000 + us_in_ms;
+}
+
+/* Update trace counter - called by TRACE macro */
+void trace_update_time(void) { g_trace_tick_us = timer_arm_get_us(); }
 
 static void timer_arm_init(void) {
-    SYSTICK_LOAD = 0x00FFFFFF; /* Max reload value */
+    SYSTICK_LOAD = SYSTICK_1MS - 1; /* 1ms interval */
     SYSTICK_VAL = 0;
-    SYSTICK_CTRL = SYSTICK_ENABLE | SYSTICK_CLKSRC;
+    SYSTICK_CTRL = SYSTICK_ENABLE | SYSTICK_TICKINT | SYSTICK_CLKSRC;
 }
 
-static unsigned int timer_arm_get_ticks(void) {
-    /* Simple tick count (may wrap, but good enough for demo) */
-    return (systick_overflows << 24) | (0x00FFFFFF - SYSTICK_VAL);
-}
+static unsigned int timer_arm_get_ms(void) { return systick_ms; }
 
 /* ============================================================================
  * ARM Main Function
@@ -74,7 +97,7 @@ int main(void) {
 
     /* Create dictionary from embedded words */
     uart_puts("Loading embedded dictionary...\n");
-    unsigned int start_ticks = timer_arm_get_ticks();
+    unsigned int start_ticks = timer_arm_get_ms();
 
     Dictionary *dict = dictionary_create(32);
     if (!dict) {
@@ -89,7 +112,7 @@ int main(void) {
         }
     }
 
-    unsigned int load_ticks = timer_arm_get_ticks() - start_ticks;
+    unsigned int load_ticks = timer_arm_get_ms() - start_ticks;
     uart_puts("Words loaded: ");
     uart_putint(count);
     uart_puts(" (");
@@ -107,7 +130,7 @@ int main(void) {
 
     /* Build index */
     uart_puts("\nBuilding index...\n");
-    start_ticks = timer_arm_get_ticks();
+    start_ticks = timer_arm_get_ms();
 
     HashTable *index = build_index(dict);
     if (!index) {
@@ -116,7 +139,7 @@ int main(void) {
         return 1;
     }
 
-    unsigned int index_ticks = timer_arm_get_ticks() - start_ticks;
+    unsigned int index_ticks = timer_arm_get_ms() - start_ticks;
     uart_puts("Unique signatures: ");
     uart_putint((int)index->entry_count);
     uart_puts(" (");
@@ -127,11 +150,11 @@ int main(void) {
     uart_puts("\nSearching for chains from '");
     uart_puts(start_word);
     uart_puts("'...\n");
-    start_ticks = timer_arm_get_ticks();
+    start_ticks = timer_arm_get_ms();
 
     ChainResults *results = find_longest_chains(index, dict, start_word);
 
-    unsigned int search_ticks = timer_arm_get_ticks() - start_ticks;
+    unsigned int search_ticks = timer_arm_get_ms() - start_ticks;
     uart_puts("Search completed (");
     uart_putint(search_ticks);
     uart_puts(" ticks)\n");

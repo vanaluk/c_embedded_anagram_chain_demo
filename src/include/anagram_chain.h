@@ -16,14 +16,34 @@ extern "C" {
 #endif
 
 /* ============================================================================
- * Constants
+ * Constants (can be overridden by including config.h before this header)
+ *
+ * Default values based on task requirements:
+ * - Words: 1-255 chars -> MAX_WORD_LENGTH = 256 (includes null terminator)
+ * - Dictionary: up to 1,000,000 words
+ * - Max chain length: 255 (start with 1 char, add 1 char each step)
  * ============================================================================
  */
 
-#define MAX_WORD_LENGTH 256
-#define INITIAL_CAPACITY 1024
-#define HASH_TABLE_SIZE 100003
-#define MAX_CHAINS 10000
+#ifndef MAX_WORD_LENGTH
+#define MAX_WORD_LENGTH 256    /* max 255 chars + null terminator */
+#endif
+
+#ifndef INITIAL_CAPACITY
+#define INITIAL_CAPACITY 1000000  /* up to 1M words in dictionary */
+#endif
+
+#ifndef HASH_TABLE_SIZE
+#define HASH_TABLE_SIZE 1000003   /* prime number >= INITIAL_CAPACITY */
+#endif
+
+#ifndef MAX_CHAINS
+#define MAX_CHAINS 100000      /* may have many longest chains */
+#endif
+
+#ifndef MAX_CHAIN_LENGTH
+#define MAX_CHAIN_LENGTH 256   /* max chain depth (255 steps + 1) */
+#endif
 
 /* ============================================================================
  * Data Structures

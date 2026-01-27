@@ -15,6 +15,14 @@
 #include "task.h"
 #include "uart.h"
 
+/* Trace timer support */
+extern volatile unsigned int g_trace_tick_us;
+
+/* FreeRTOS tick to microseconds (assumes 1ms tick) */
+void trace_update_time(void) {
+    g_trace_tick_us = (unsigned int)xTaskGetTickCount() * 1000;
+}
+
 /* ============================================================================
  * Embedded Dictionary
  * ============================================================================
