@@ -195,3 +195,18 @@ make IMPL=human MEM=dynamic stress STRESS_WORD=yg
 # 5. Compare all implementations
 make benchmark ARGS='tests/data/stress.txt yg 3'
 ```
+
+## Code Quality
+
+```bash
+# Run static analysis (clang-format, cppcheck, clang-tidy)
+make lint
+
+# Verify all 9 build configurations compile and tests pass
+make check
+```
+
+The `check` target builds all combinations:
+- AI × (PC, ARM bare-metal, ARM FreeRTOS) = 3
+- Human static × (PC, ARM bare-metal, ARM FreeRTOS) = 3  
+- Human dynamic × (PC, ARM bare-metal, ARM FreeRTOS) = 3

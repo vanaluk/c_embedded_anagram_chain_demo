@@ -43,12 +43,12 @@ void trace_update_time(void);
         }                                                                \
     } while (0)
 
-#define OUTPUT(fmt, ...)                              \
-    do                                                \
-    {                                                 \
-        char _obuf[256];                              \
+#define OUTPUT(fmt, ...)                                    \
+    do                                                      \
+    {                                                       \
+        char _obuf[256];                                    \
         snprintf(_obuf, sizeof(_obuf), fmt, ##__VA_ARGS__); \
-        uart_puts(_obuf);                             \
+        uart_puts(_obuf);                                   \
     } while (0)
 
 #else

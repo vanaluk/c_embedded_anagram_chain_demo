@@ -75,22 +75,36 @@ Total execution time: Total: 0.187 ms
 make test
 ```
 
-## Implementation Selection
-
-The project has two implementations:
+## Code Quality
 
 ```bash
-# AI implementation (default, fully working)
-make IMPL=ai test
+# Run static analysis (clang-format, cppcheck, clang-tidy)
+make lint
 
-# Human implementation (TODO stubs for manual implementation)
-make IMPL=human test
+# Verify all 9 build configurations compile and tests pass
+make check
 ```
 
-**Binary naming:**
-- `make` or `make IMPL=ai` → `bin/anagram_chain` (AI implementation)
-- `make IMPL=human` → `bin/anagram_chain` (Human implementation, same name)
-- `make IMPL=both` → `bin/anagram_chain_ai` + `bin/anagram_chain_human` (both for benchmarking)
+## Implementation Selection
+
+The project has two implementations with different memory modes:
+
+```bash
+# AI implementation (default, dynamic memory)
+make IMPL=ai test
+
+# Human implementation (static memory, for embedded)
+make IMPL=human test
+
+# Human implementation (dynamic memory, optimized)
+make IMPL=human MEM=dynamic test
+```
+
+**Build commands:**
+- `make` or `make IMPL=ai` → AI implementation (dynamic memory)
+- `make IMPL=human` → Human implementation (static memory)
+- `make IMPL=human MEM=dynamic` → Human implementation (dynamic memory)
+- `make build-all` → All three for benchmarking
 
 ## Benchmarking
 

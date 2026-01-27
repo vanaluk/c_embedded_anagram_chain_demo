@@ -413,7 +413,7 @@ run-freertos: $(TARGET_FREERTOS_ELF)
 
 .PHONY: format
 format:
-	clang-format -i src/impl/*/*.c $(MAIN_DIR)/*.c $(TEST_DIR)/*.c $(INCLUDE_DIR)/*.h 2>/dev/null || true
+	find src tests -name '*.c' -o -name '*.h' | xargs clang-format -i
 
 # ==============================================================================
 # Benchmark Targets
@@ -473,6 +473,42 @@ stress: $(TARGET_PC)
 	done
 
 # ==============================================================================
+# Code Quality / Lint
+# ==============================================================================
+
+.PHONY: lint
+lint:
+	@echo "========================================"
+	@echo "  Running static analysis"
+	@echo "========================================"
+	@echo ""
+	@echo "=== clang-format (check only) ==="
+	@find src tests -name '*.c' -o -name '*.h' | xargs clang-format --dry-run --Werror 2>&1 || echo "  Formatting issues found"
+	@echo ""
+	@echo "=== cppcheck ==="
+	@cppcheck --enable=warning,style,performance,portability \
+		--suppress=missingIncludeSystem \
+		--suppress=unusedFunction \
+		--error-exitcode=0 \
+		--inline-suppr \
+		-I src/include \
+		src/ tests/ 2>&1 || true
+	@echo ""
+	@echo "=== clang-tidy (human implementation) ==="
+	@clang-tidy src/impl/human/*.c src/main/main_pc.c \
+		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
+		-- -I src/include -I src/impl/human -std=c11 2>&1 || true
+	@echo ""
+	@echo "=== clang-tidy (AI implementation) ==="
+	@clang-tidy src/impl/ai/*.c \
+		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
+		-- -I src/include -std=c11 -DIMPL_AI 2>&1 || true
+	@echo ""
+	@echo "========================================"
+	@echo "  Static analysis complete"
+	@echo "========================================"
+
+# ==============================================================================
 # Clean
 # ==============================================================================
 
@@ -517,6 +553,8 @@ help:
 	@echo ""
 	@echo "  Utilities:"
 	@echo "    format                 - Format code with clang-format"
+	@echo "    lint                   - Run static analysis (cppcheck, clang-tidy)"
+	@echo "    check                  - Build and test all 9 configurations"
 	@echo "    clean                  - Remove build artifacts"
 	@echo "    help                   - Show this help"
 	@echo ""

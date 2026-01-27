@@ -40,7 +40,6 @@ extern bool global_trace_enable;
 #define POOL_MAX_HASH_ENTRIES      64
 #define POOL_MAX_INDICES_PER_ENTRY 8
 #define POOL_MAX_CHAINS            8
-#define POOL_MAX_CHAIN_LEN         16
 #else
 /* PC: larger limits for stress testing (supports up to 1M words) */
 #define POOL_MAX_WORDS             1000000
@@ -49,8 +48,11 @@ extern bool global_trace_enable;
 #define POOL_MAX_HASH_ENTRIES      (POOL_MAX_WORDS)
 #define POOL_MAX_INDICES_PER_ENTRY 256
 #define POOL_MAX_CHAINS            16384
-#define POOL_MAX_CHAIN_LEN         512
 #endif
+
+#define MAX_CHAIN_DEPTH    (POOL_MAX_WORD_LEN)
+#define POOL_MAX_CHAIN_LEN (MAX_CHAIN_DEPTH)
+#define SIG_BUFFER_COUNT   8
 
 /*
  * Generic buffer pool for temporary allocations
@@ -58,9 +60,6 @@ extern bool global_trace_enable;
  */
 #define POOL_BUFFER_SIZE  4096
 #define POOL_BUFFER_COUNT 32
-
-#define MAX_CHAIN_DEPTH  256
-#define SIG_BUFFER_COUNT 8
 
 /*
  * Override anagram_chain.h defaults with human-specific values

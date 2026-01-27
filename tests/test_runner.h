@@ -23,12 +23,12 @@
 #if defined(PLATFORM_ARM)
 /* ARM platforms use UART */
 #include "uart.h"
-#define test_puts(s) uart_puts(s)
+#define test_puts(s)   uart_puts(s)
 #define test_putint(n) uart_putint(n)
 #else
 /* PC uses stdio */
 #include <stdio.h>
-#define test_puts(s) printf("%s", s)
+#define test_puts(s)   printf("%s", s)
 #define test_putint(n) printf("%d", n)
 #endif
 
@@ -38,14 +38,16 @@
  */
 
 #define TEST_PASS(name)         \
-    do {                        \
+    do                          \
+    {                           \
         test_puts("  [PASS] "); \
         test_puts(name);        \
         test_puts("\n");        \
     } while (0)
 
 #define TEST_SKIP(name, reason) \
-    do {                        \
+    do                          \
+    {                           \
         test_puts("  [SKIP] "); \
         test_puts(name);        \
         test_puts(": ");        \
@@ -54,7 +56,8 @@
     } while (0)
 
 #define TEST_FAIL(name, msg)    \
-    do {                        \
+    do                          \
+    {                           \
         test_puts("  [FAIL] "); \
         test_puts(name);        \
         test_puts(": ");        \
@@ -63,19 +66,25 @@
         return 1;               \
     } while (0)
 
-#define ASSERT_TRUE(cond, name, msg)       \
-    do {                                   \
-        if (!(cond)) TEST_FAIL(name, msg); \
+#define ASSERT_TRUE(cond, name, msg) \
+    do                               \
+    {                                \
+        if (!(cond))                 \
+            TEST_FAIL(name, msg);    \
     } while (0)
 
-#define ASSERT_EQ(a, b, name, msg)            \
-    do {                                      \
-        if ((a) != (b)) TEST_FAIL(name, msg); \
+#define ASSERT_EQ(a, b, name, msg) \
+    do                             \
+    {                              \
+        if ((a) != (b))            \
+            TEST_FAIL(name, msg);  \
     } while (0)
 
-#define ASSERT_STR_EQ(a, b, name, msg)                   \
-    do {                                                 \
-        if (strcmp((a), (b)) != 0) TEST_FAIL(name, msg); \
+#define ASSERT_STR_EQ(a, b, name, msg) \
+    do                                 \
+    {                                  \
+        if (strcmp((a), (b)) != 0)     \
+            TEST_FAIL(name, msg);      \
     } while (0)
 
 /* ============================================================================

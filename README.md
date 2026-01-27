@@ -387,12 +387,23 @@ git submodule update --init --recursive
 3. Build: `Ctrl+Shift+B` → Select target
 4. Debug: `F5` → Select configuration
 
-### Code Formatting
+### Code Quality
 
 ```bash
 # Format all source files
 make format
+
+# Run static analysis (clang-format, cppcheck, clang-tidy)
+make lint
+
+# Verify all 9 build configurations compile and tests pass
+make check
 ```
+
+The `check` target builds and tests all combinations:
+- AI × (PC, ARM bare-metal, ARM FreeRTOS) = 3
+- Human static × (PC, ARM bare-metal, ARM FreeRTOS) = 3
+- Human dynamic × (PC, ARM bare-metal, ARM FreeRTOS) = 3
 
 ## Tools Used
 
@@ -403,7 +414,7 @@ make format
 - **RTOS:** FreeRTOS V11.1.0
 - **Emulation:** QEMU (lm3s6965evb)
 - **CI/CD:** GitHub Actions
-- **Code Quality:** clang-format, clangd
+- **Code Quality:** clang-format, cppcheck, clang-tidy, clangd
 
 ## License
 
