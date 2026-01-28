@@ -1,5 +1,5 @@
 /*
- * anagram_chain.c - Human implementation of anagram chain algorithm
+ * anagram_chain_core.c - Core algorithm and data structures
  *
  * Contains memory-mode specific implementations:
  * - Dynamic (USE_DYNAMIC_MEMORY): Optimized bulk allocation, fewer malloc calls

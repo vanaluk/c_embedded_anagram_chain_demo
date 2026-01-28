@@ -116,9 +116,9 @@ LDFLAGS_ARM_BAREMETAL = -T $(ARM_DIR)/linker.ld \
 # ==============================================================================
 
 # Implementation source files
-# Human implementation is split into main (memory modes) and internal (common functions)
+# Human implementation is split into core (algorithm/memory) and io (timer/validation/output)
 ifeq ($(IMPL),human)
-IMPL_SRC = $(IMPL_DIR)/anagram_chain.c $(IMPL_DIR)/anagram_chain_internal.c
+IMPL_SRC = $(IMPL_DIR)/anagram_chain_core.c $(IMPL_DIR)/anagram_chain_io.c
 else
 IMPL_SRC = $(IMPL_DIR)/anagram_chain.c
 endif

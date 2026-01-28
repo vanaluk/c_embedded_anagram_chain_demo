@@ -1,5 +1,5 @@
 /*
- * anagram_chain_internal.c - Internal shared functions
+ * anagram_chain_io.c - I/O and utility functions
  *
  * Common functions used by both static and dynamic memory implementations.
  * Includes: timing, validation, file I/O, output.
@@ -7,7 +7,7 @@
 
 #include "global.h"
 
-/* Defined in anagram_chain.c - returns word by index */
+/* Defined in anagram_chain_core.c - returns word by index */
 extern const char *get_word(size_t idx);
 
 /* Timer functions */
