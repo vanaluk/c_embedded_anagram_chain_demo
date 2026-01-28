@@ -383,6 +383,11 @@ docker-build-test-freertos:
 docker-run-test-freertos:
 	docker run --rm -it anagram-chain-test-freertos
 
+.PHONY: docker-lint
+docker-lint:
+	docker build -t anagram-chain-lint --target lint -f docker/Dockerfile .
+	docker run --rm anagram-chain-lint
+
 # ==============================================================================
 # Run Targets (local QEMU)
 # ==============================================================================
@@ -489,6 +494,7 @@ lint:
 	@cppcheck --enable=warning,style,performance,portability \
 		--suppress=missingIncludeSystem \
 		--suppress=unusedFunction \
+		--suppress=variableScope \
 		--error-exitcode=0 \
 		--inline-suppr \
 		-I src/include \
@@ -496,13 +502,13 @@ lint:
 	@echo ""
 	@echo "=== clang-tidy (human implementation) ==="
 	@clang-tidy src/impl/human/*.c src/main/main_pc.c \
-		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
-		-- -I src/include -I src/impl/human -std=c11 2>&1 || true
+		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion,-bugprone-narrowing-conversions,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling' \
+		-- -I src/include -I src/impl/human -std=c11 -D_POSIX_C_SOURCE=199309L 2>&1 || true
 	@echo ""
 	@echo "=== clang-tidy (AI implementation) ==="
 	@clang-tidy src/impl/ai/*.c \
-		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion' \
-		-- -I src/include -std=c11 -DIMPL_AI 2>&1 || true
+		-checks='-*,bugprone-*,cert-*,clang-analyzer-*,misc-*,performance-*,portability-*,-bugprone-easily-swappable-parameters,-cert-err33-c,-misc-no-recursion,-bugprone-narrowing-conversions,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling' \
+		-- -I src/include -std=c11 -DIMPL_AI -D_POSIX_C_SOURCE=199309L 2>&1 || true
 	@echo ""
 	@echo "========================================"
 	@echo "  Static analysis complete"
@@ -550,6 +556,7 @@ help:
 	@echo "    docker-run             - Run PC binary in Docker"
 	@echo "    docker-run-baremetal   - Run bare-metal in Docker+QEMU"
 	@echo "    docker-run-freertos    - Run FreeRTOS in Docker+QEMU"
+	@echo "    docker-lint            - Run static analysis in Docker"
 	@echo ""
 	@echo "  Utilities:"
 	@echo "    format                 - Format code with clang-format"

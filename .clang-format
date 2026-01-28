@@ -112,7 +112,7 @@ PenaltyIndentedWhitespace: 0
 PenaltyReturnTypeOnItsOwnLine: 60
 
 # Other
-InsertBraces: true
+# InsertBraces: true  # Requires clang-format 15+, commented for CI compatibility
 MaxEmptyLinesToKeep: 1
 SeparateDefinitionBlocks: Leave
 UseCRLF: false
