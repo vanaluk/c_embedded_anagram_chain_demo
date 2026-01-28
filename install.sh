@@ -49,6 +49,8 @@ show_help() {
     echo "  - qemu-system-arm       (ARM system emulator)"
     echo "  - gdb-multiarch         (Debugger for ARM)"
     echo "  - clang-format          (Code formatter)"
+    echo "  - clang-tidy            (Static analyzer)"
+    echo "  - cppcheck              (Static analyzer)"
     echo "  - git                   (Version control)"
     echo "  - docker.io             (Optional, for Docker builds)"
 }
@@ -114,7 +116,8 @@ install_packages() {
     print_step "Installing code quality tools..."
     sudo apt-get install -y \
         clang-format \
-        clang-tidy || print_warning "clang-tidy not installed (optional)"
+        clang-tidy \
+        cppcheck || print_warning "Some code quality tools not installed (optional)"
     
     # Docker is optional
     print_step "Installing Docker (optional)..."
@@ -219,6 +222,13 @@ verify_installation() {
         echo "  [OK] clang-tidy: $(clang-tidy --version | head -1)"
     else
         echo "  [WARN] clang-tidy not found (optional)"
+    fi
+    
+    # Check cppcheck
+    if command -v cppcheck &> /dev/null; then
+        echo "  [OK] cppcheck: $(cppcheck --version)"
+    else
+        echo "  [WARN] cppcheck not found (optional)"
     fi
     
     echo ""

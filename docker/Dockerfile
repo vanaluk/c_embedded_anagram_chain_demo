@@ -1,10 +1,13 @@
 # Multi-stage Dockerfile for Embedded Anagram Chain Demo
 #
 # Stages:
-#   builder   - Build environment with compilers
-#   runtime   - Minimal runtime for PC binary
-#   baremetal - ARM Cortex-M3 bare-metal with QEMU system emulation
-#   freertos  - ARM Cortex-M3 with FreeRTOS and QEMU system emulation
+#   builder       - Build environment with compilers and static analysis tools
+#   runtime       - Minimal runtime for PC binary
+#   baremetal     - ARM Cortex-M3 bare-metal with QEMU system emulation
+#   freertos      - ARM Cortex-M3 with FreeRTOS and QEMU system emulation
+#   test-baremetal - ARM bare-metal tests with QEMU
+#   test-freertos  - ARM FreeRTOS tests with QEMU
+#   lint          - Static analysis (clang-format, clang-tidy, cppcheck)
 
 # ==============================================================================
 # Stage 1: Builder
@@ -14,13 +17,16 @@ FROM ubuntu:22.04 AS builder
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools (including ARM bare-metal toolchain)
+# Install build tools (including ARM bare-metal toolchain and static analysis)
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc-arm-none-eabi \
     libnewlib-arm-none-eabi \
     make \
     git \
+    clang-format \
+    clang-tidy \
+    cppcheck \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -143,3 +149,13 @@ WORKDIR /app
 COPY --from=builder /app/bin/test_freertos.elf ./bin/
 
 ENTRYPOINT ["qemu-system-arm", "-M", "lm3s6965evb", "-nographic", "-kernel", "./bin/test_freertos.elf"]
+
+# ==============================================================================
+# Stage 7: Lint/Static Analysis
+# ==============================================================================
+FROM builder AS lint
+
+WORKDIR /app
+
+# Run static analysis
+CMD ["make", "lint"]
