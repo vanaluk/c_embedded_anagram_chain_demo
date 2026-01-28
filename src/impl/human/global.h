@@ -24,6 +24,7 @@
 #include "config.h"
 #include "anagram_chain.h"
 #include "trace.h"
+#include "assert.h"
 
 #define UNUSED(x) ((void)(x))
 

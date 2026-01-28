@@ -125,6 +125,7 @@ Total execution time: Total: 0.257 ms
 | ARM Bare-metal | `make arm-baremetal` | `bin/anagram_chain_baremetal.elf` |
 | ARM FreeRTOS | `make arm-freertos` | `bin/anagram_chain_freertos.elf` |
 | Docker (PC) | `make docker-build` | Docker image |
+| Docker (Bare-metal) | `make docker-build-baremetal` | Docker image |
 | Docker (FreeRTOS) | `make docker-build-freertos` | Docker image |
 
 ### Implementation Selection

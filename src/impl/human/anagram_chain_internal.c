@@ -2,10 +2,13 @@
  * anagram_chain_internal.c - Internal shared functions
  *
  * Common functions used by both static and dynamic memory implementations.
- * Includes: timing, validation, file I/O.
+ * Includes: timing, validation, file I/O, output.
  */
 
 #include "global.h"
+
+/* Defined in anagram_chain.c - returns word by index */
+extern const char *get_word(size_t idx);
 
 /* Timer functions */
 
@@ -34,6 +37,8 @@ double timer_now(void)
 void timer_print(const char *label, double start, double end)
 {
     double ms;
+
+    ASSERT_NOT_NULL(label);
 
     TRACE(">> timer_print label=%s", label);
 
@@ -173,6 +178,8 @@ int load_dictionary(const char *fname, Dictionary *dict)
         return -1;
     }
 
+    ASSERT_NOT_NULL(dict);
+
     f = fopen(fname, "r");
     if (!f)
     {
@@ -206,4 +213,79 @@ int load_dictionary(const char *fname, Dictionary *dict)
 
     return n;
 #endif
+}
+
+/* Output functions */
+
+void print_chain(Dictionary *dict, Chain *chain)
+{
+    size_t i;
+
+    UNUSED(dict);
+    ASSERT_NOT_NULL(chain);
+    ASSERT_NOT_NULL(chain->indices);
+
+    for (i = 0; i < chain->length; i++)
+    {
+        OUTPUT("%s", get_word(chain->indices[i]));
+        if (i < chain->length - 1)
+        {
+            OUTPUT("->");
+        }
+    }
+
+    OUTPUT("\n");
+}
+
+void print_results(Dictionary *dict, ChainResults *results)
+{
+    size_t i;
+
+    TRACE(">> print_results");
+
+    UNUSED(dict);
+
+    if (!results || results->count == 0)
+    {
+        OUTPUT("No chains found.\n");
+
+        TRACE("<< print_results (no chains)");
+
+        return;
+    }
+
+    OUTPUT("\nFound %u chain(s) of length %u:\n", (unsigned)results->count,
+           (unsigned)results->max_length);
+
+    for (i = 0; i < results->count; i++)
+    {
+        print_chain(NULL, &results->chains[i]);
+    }
+
+    TRACE("<< print_results");
+}
+
+void print_usage(const char *prog)
+{
+    TRACE(">> print_usage");
+
+#if defined(PLATFORM_ARM)
+    UNUSED(prog);
+
+    OUTPUT("Embedded Anagram Chain Demo\n");
+    OUTPUT("===========================\n\n");
+    OUTPUT("ARM version - words loaded via dictionary_add()\n");
+#else
+    OUTPUT("Embedded Anagram Chain Demo\n");
+    OUTPUT("===========================\n\n");
+    OUTPUT("Finds the longest chain of derived anagrams in a dictionary.\n\n");
+    OUTPUT("Usage: %s <dictionary_file> <starting_word>\n\n", prog);
+    OUTPUT("Arguments:\n");
+    OUTPUT("  dictionary_file  Path to dictionary file (one word per line)\n");
+    OUTPUT("  starting_word    Word to start the chain from\n\n");
+    OUTPUT("Example:\n");
+    OUTPUT("  %s words.txt abc\n", prog);
+#endif
+
+    TRACE("<< print_usage");
 }

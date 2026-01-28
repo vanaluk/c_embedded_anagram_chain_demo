@@ -35,7 +35,11 @@ __attribute__((weak)) void trace_update_time(void)
 
 static unsigned long hash_fnv1a(const char *s)
 {
-    unsigned long h = FNV_OFFSET_BASIS;
+    unsigned long h;
+
+    ASSERT_NOT_NULL(s);
+
+    h = FNV_OFFSET_BASIS;
 
     while (*s)
     {
@@ -54,8 +58,11 @@ static void sort_chars(char *s, size_t len)
     size_t pos;
     int c;
 
+    ASSERT_NOT_NULL(s);
+
     for (i = 0; i < len; i++)
     {
+        ASSERT_MSG((unsigned char)s[i] < CHAR_COUNT_SIZE, "char out of range");
         counts[(unsigned char)s[i]]++;
     }
 
@@ -75,6 +82,9 @@ static size_t insert_sorted(char *dst, const char *src, size_t len, char c)
     size_t i = 0;
     size_t j = 0;
     int inserted = 0;
+
+    ASSERT_NOT_NULL(dst);
+    ASSERT_NOT_NULL(src);
 
     while (i < len)
     {
@@ -142,7 +152,13 @@ static void dfs_dynamic(HashTable *ht, Dictionary *dict, size_t cur,
     Chain *new_chains;
     size_t *indices;
 
+    ASSERT_NOT_NULL(ht);
+    ASSERT_NOT_NULL(dict);
+    ASSERT_MSG(cur < dict->count, "cur index out of bounds");
+    ASSERT_MSG(depth <= MAX_CHAIN_DEPTH, "depth exceeds MAX_CHAIN_DEPTH");
+
     sig = dict->signatures[cur];
+    ASSERT_NOT_NULL(sig);
     sig_len = strlen(sig);
     found = 0;
 
@@ -499,6 +515,8 @@ void hashtable_insert(HashTable *ht, const char *sig, size_t word_idx)
         return;
     }
 
+    ASSERT_MSG(ht->bucket_count > 0, "bucket_count must be > 0");
+
     hash = hash_fnv1a(sig) % ht->bucket_count;
 
     /* Check if signature already exists in this bucket */
@@ -798,7 +816,7 @@ HashTable *build_index(Dictionary *dict)
 }
 
 /* Word accessor for internal.c print functions */
-static const char *get_word(size_t idx)
+const char *get_word(size_t idx)
 {
     if (GLOBAL.dict && idx < GLOBAL.dict->count)
     {
@@ -889,6 +907,9 @@ static void dfs_static(size_t cur, size_t depth)
     size_t i;
     size_t next;
     size_t chain_idx;
+
+    ASSERT_MSG(cur < POOL_MAX_WORDS, "cur index out of bounds");
+    ASSERT_MSG(depth <= MAX_CHAIN_DEPTH, "depth exceeds MAX_CHAIN_DEPTH");
 
     sig = GLOBAL.signatures[cur];
     sig_len = strlen(sig);
@@ -1312,7 +1333,7 @@ HashTable *build_index(Dictionary *dict)
     return ht;
 }
 
-static const char *get_word(size_t idx)
+const char *get_word(size_t idx)
 {
     if (idx < GLOBAL.word_count)
     {
@@ -1322,75 +1343,3 @@ static const char *get_word(size_t idx)
 }
 
 #endif /* USE_DYNAMIC_MEMORY */
-
-/* Output functions - common for both memory modes */
-void print_chain(Dictionary *dict, Chain *chain)
-{
-    size_t i;
-
-    UNUSED(dict);
-
-    for (i = 0; i < chain->length; i++)
-    {
-        OUTPUT("%s", get_word(chain->indices[i]));
-        if (i < chain->length - 1)
-        {
-            OUTPUT("->");
-        }
-    }
-
-    OUTPUT("\n");
-}
-
-void print_results(Dictionary *dict, ChainResults *results)
-{
-    size_t i;
-
-    TRACE(">> print_results");
-
-    UNUSED(dict);
-
-    if (!results || results->count == 0)
-    {
-        OUTPUT("No chains found.\n");
-
-        TRACE("<< print_results (no chains)");
-
-        return;
-    }
-
-    OUTPUT("\nFound %u chain(s) of length %u:\n", (unsigned)results->count,
-           (unsigned)results->max_length);
-
-    for (i = 0; i < results->count; i++)
-    {
-        print_chain(NULL, &results->chains[i]);
-    }
-
-    TRACE("<< print_results");
-}
-
-void print_usage(const char *prog)
-{
-    TRACE(">> print_usage");
-
-#if defined(PLATFORM_ARM)
-    UNUSED(prog);
-
-    OUTPUT("Embedded Anagram Chain Demo\n");
-    OUTPUT("===========================\n\n");
-    OUTPUT("ARM version - words loaded via dictionary_add()\n");
-#else
-    OUTPUT("Embedded Anagram Chain Demo\n");
-    OUTPUT("===========================\n\n");
-    OUTPUT("Finds the longest chain of derived anagrams in a dictionary.\n\n");
-    OUTPUT("Usage: %s <dictionary_file> <starting_word>\n\n", prog);
-    OUTPUT("Arguments:\n");
-    OUTPUT("  dictionary_file  Path to dictionary file (one word per line)\n");
-    OUTPUT("  starting_word    Word to start the chain from\n\n");
-    OUTPUT("Example:\n");
-    OUTPUT("  %s words.txt abc\n", prog);
-#endif
-
-    TRACE("<< print_usage");
-}
