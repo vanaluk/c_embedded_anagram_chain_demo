@@ -1,11 +1,14 @@
 {
     "version": "2.0.0",
     "tasks": [
+        // =====================================================================
+        // AI Implementation (dynamic memory only)
+        // =====================================================================
         {
-            "label": "Build PC",
+            "label": "Build AI - PC",
             "type": "shell",
             "command": "make",
-            "args": [],
+            "args": ["IMPL=ai"],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -17,10 +20,10 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build PC Debug",
+            "label": "Build AI - PC Debug",
             "type": "shell",
             "command": "make",
-            "args": ["debug"],
+            "args": ["IMPL=ai", "debug"],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -29,10 +32,10 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build ARM Bare-metal",
+            "label": "Build AI - ARM Bare-metal",
             "type": "shell",
             "command": "make",
-            "args": ["arm-baremetal"],
+            "args": ["IMPL=ai", "arm-baremetal"],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -41,10 +44,26 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build ARM FreeRTOS",
+            "label": "Build AI - ARM FreeRTOS",
             "type": "shell",
             "command": "make",
-            "args": ["arm-freertos"],
+            "args": ["IMPL=ai", "arm-freertos"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+
+        // =====================================================================
+        // Human Implementation - Static Memory
+        // =====================================================================
+        {
+            "label": "Build Human Static - PC",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=static"],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -53,10 +72,10 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Build Tests",
+            "label": "Build Human Static - PC Debug",
             "type": "shell",
             "command": "make",
-            "args": ["build/test_anagram"],
+            "args": ["IMPL=human", "MEM=static", "debug"],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -65,10 +84,126 @@
             "problemMatcher": "$gcc"
         },
         {
-            "label": "Run Tests",
+            "label": "Build Human Static - ARM Bare-metal",
             "type": "shell",
             "command": "make",
-            "args": ["test"],
+            "args": ["IMPL=human", "MEM=static", "arm-baremetal"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Human Static - ARM FreeRTOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=static", "arm-freertos"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+
+        // =====================================================================
+        // Human Implementation - Dynamic Memory
+        // =====================================================================
+        {
+            "label": "Build Human Dynamic - PC",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=dynamic"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Human Dynamic - PC Debug",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=dynamic", "debug"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Human Dynamic - ARM Bare-metal",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=dynamic", "arm-baremetal"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Human Dynamic - ARM FreeRTOS",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=dynamic", "arm-freertos"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+
+        // =====================================================================
+        // Tests
+        // =====================================================================
+        {
+            "label": "Build Tests - AI",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=ai", "build/test_pc"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Tests - Human Static",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=static", "build/test_pc"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Tests - Human Dynamic",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=dynamic", "build/test_pc"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Run Tests - AI",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=ai", "test"],
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -76,6 +211,34 @@
             },
             "problemMatcher": []
         },
+        {
+            "label": "Run Tests - Human Static",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=static", "test"],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Tests - Human Dynamic",
+            "type": "shell",
+            "command": "make",
+            "args": ["IMPL=human", "MEM=dynamic", "test"],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+
+        // =====================================================================
+        // Run in QEMU
+        // =====================================================================
         {
             "label": "Run ARM Bare-metal (QEMU)",
             "type": "shell",
@@ -87,7 +250,7 @@
                 "panel": "dedicated"
             },
             "problemMatcher": [],
-            "dependsOn": "Build ARM Bare-metal"
+            "dependsOn": "Build Human Static - ARM Bare-metal"
         },
         {
             "label": "Run ARM FreeRTOS (QEMU)",
@@ -100,10 +263,14 @@
                 "panel": "dedicated"
             },
             "problemMatcher": [],
-            "dependsOn": "Build ARM FreeRTOS"
+            "dependsOn": "Build Human Static - ARM FreeRTOS"
         },
+
+        // =====================================================================
+        // QEMU Debug (for launch.json)
+        // =====================================================================
         {
-            "label": "QEMU Debug Bare-metal",
+            "label": "QEMU Debug Bare-metal - Human Static",
             "type": "shell",
             "command": "qemu-system-arm -M lm3s6965evb -nographic -S -gdb tcp::1234 -kernel ${workspaceFolder}/bin/anagram_chain_baremetal.elf",
             "isBackground": true,
@@ -125,10 +292,10 @@
                 "panel": "dedicated",
                 "clear": true
             },
-            "dependsOn": "Build ARM Bare-metal"
+            "dependsOn": "Build Human Static - ARM Bare-metal"
         },
         {
-            "label": "QEMU Debug FreeRTOS",
+            "label": "QEMU Debug FreeRTOS - Human Static",
             "type": "shell",
             "command": "qemu-system-arm -M lm3s6965evb -nographic -S -gdb tcp::1234 -kernel ${workspaceFolder}/bin/anagram_chain_freertos.elf",
             "isBackground": true,
@@ -150,8 +317,12 @@
                 "panel": "dedicated",
                 "clear": true
             },
-            "dependsOn": "Build ARM FreeRTOS"
+            "dependsOn": "Build Human Static - ARM FreeRTOS"
         },
+
+        // =====================================================================
+        // Utilities
+        // =====================================================================
         {
             "label": "Clean",
             "type": "shell",
@@ -172,6 +343,30 @@
             "group": "build",
             "presentation": {
                 "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Lint",
+            "type": "shell",
+            "command": "make",
+            "args": ["lint"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Check All Configurations",
+            "type": "shell",
+            "command": "make",
+            "args": ["check"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
                 "panel": "shared"
             },
             "problemMatcher": []
