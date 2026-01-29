@@ -28,4 +28,36 @@
 
 #define UNUSED(x) ((void)(x))
 
+typedef char WordBuffer[POOL_MAX_WORD_LEN];
+typedef size_t ChainPath[MAX_CHAIN_DEPTH];
+
+typedef struct
+{
+    WordBuffer word;
+    WordBuffer signature;
+} WordEntry;
+
+typedef struct
+{
+    ChainPath path;
+    WordBuffer candidate;
+    WordBuffer temp_sig;
+} DfsContext;
+
+typedef struct
+{
+    ChainPath indices;
+    size_t length;
+} ChainStorage;
+
+/* Memory pools for dynamic allocation mode */
+typedef struct
+{
+    char *word_pool;
+    char *sig_pool;
+    size_t pool_size;
+    size_t word_used;
+    size_t sig_used;
+} MemoryPools;
+
 #endif /* GLOBAL_H_ */

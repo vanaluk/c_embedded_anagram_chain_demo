@@ -1,0 +1,21 @@
+{
+  "theme": "default",
+  "themeVariables": {
+    "fontSize": "12px",
+    "fontFamily": "Arial, sans-serif"
+  },
+  "flowchart": {
+    "htmlLabels": true,
+    "curve": "basis",
+    "nodeSpacing": 30,
+    "rankSpacing": 30,
+    "padding": 10,
+    "useMaxWidth": true
+  },
+  "sequence": {
+    "useMaxWidth": true
+  },
+  "class": {
+    "useMaxWidth": true
+  }
+}

@@ -21,8 +21,8 @@ extern bool global_trace_enable;
 #define ASCII_MIN 33
 #define ASCII_MAX 126
 
-/* Counting sort array size */
-#define CHAR_COUNT_SIZE 128
+/* Counting sort array size: must cover all valid char codes (0..ASCII_MAX) */
+#define CHAR_COUNT_SIZE (ASCII_MAX + 1)
 
 /*
  * Static memory pool configuration

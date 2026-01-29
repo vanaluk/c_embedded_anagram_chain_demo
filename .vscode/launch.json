@@ -1,8 +1,11 @@
 {
     "version": "0.2.0",
     "configurations": [
+        // =====================================================================
+        // AI Implementation - PC Debug
+        // =====================================================================
         {
-            "name": "Debug PC",
+            "name": "Debug AI - PC",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/anagram_chain_debug",
@@ -22,14 +25,74 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build PC Debug",
+            "preLaunchTask": "Build AI - PC Debug",
             "miDebuggerPath": "/usr/bin/gdb"
         },
+
+        // =====================================================================
+        // Human Static - PC Debug
+        // =====================================================================
         {
-            "name": "Debug Tests",
+            "name": "Debug Human Static - PC",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/test_anagram",
+            "program": "${workspaceFolder}/bin/anagram_chain_debug",
+            "args": [
+                "${workspaceFolder}/tests/data/example.txt",
+                "abck"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Human Static - PC Debug",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+
+        // =====================================================================
+        // Human Dynamic - PC Debug
+        // =====================================================================
+        {
+            "name": "Debug Human Dynamic - PC",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/anagram_chain_debug",
+            "args": [
+                "${workspaceFolder}/tests/data/example.txt",
+                "abck"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Human Dynamic - PC Debug",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+
+        // =====================================================================
+        // Tests Debug
+        // =====================================================================
+        {
+            "name": "Debug Tests - AI",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_pc",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -43,11 +106,57 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build Tests",
+            "preLaunchTask": "Build Tests - AI",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
-            "name": "Debug ARM Bare-metal (QEMU GDB)",
+            "name": "Debug Tests - Human Static",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_pc",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Tests - Human Static",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug Tests - Human Dynamic",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test_pc",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build Tests - Human Dynamic",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+
+        // =====================================================================
+        // ARM Bare-metal Debug (QEMU GDB)
+        // =====================================================================
+        {
+            "name": "Debug ARM Bare-metal - Human Static (QEMU)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/anagram_chain_baremetal.elf",
@@ -83,13 +192,17 @@
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "QEMU Debug Bare-metal",
+            "preLaunchTask": "QEMU Debug Bare-metal - Human Static",
             "serverLaunchTimeout": 10000,
             "filterStdout": true,
             "filterStderr": true
         },
+
+        // =====================================================================
+        // ARM FreeRTOS Debug (QEMU GDB)
+        // =====================================================================
         {
-            "name": "Debug ARM FreeRTOS (QEMU GDB)",
+            "name": "Debug ARM FreeRTOS - Human Static (QEMU)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/anagram_chain_freertos.elf",
@@ -125,7 +238,7 @@
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "QEMU Debug FreeRTOS",
+            "preLaunchTask": "QEMU Debug FreeRTOS - Human Static",
             "serverLaunchTimeout": 10000,
             "filterStdout": true,
             "filterStderr": true

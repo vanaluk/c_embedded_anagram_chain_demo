@@ -2,16 +2,25 @@
 
 [![CI](https://github.com/vanaluk/c_embedded_anagram_chain_demo/actions/workflows/ci.yml/badge.svg)](https://github.com/vanaluk/c_embedded_anagram_chain_demo/actions/workflows/ci.yml)
 
-Cross-platform Embedded C project showcasing professional development practices.
+## Introduction
 
-**Highlights:**
-- Identical codebase compiles for **PC (x86_64)**, **ARM Cortex-M3 bare-metal**, and **ARM FreeRTOS**
-- Full **QEMU emulation** with integrated **VSCode debugging** (GDB remote)
-- **Docker-based builds** for reproducible environments
-- **Unit tests** running on all three platforms
-- **CI/CD** with GitHub Actions
+Hi!
 
-Demonstrates: Cross-compilation, RTOS integration, bare-metal programming, UART drivers, linker scripts, startup code, and embedded debugging workflows.
+I understand that a simple solution algorithm was expected, but in this project I wanted to demonstrate not just the solution to the Anagram Chain problem but also my skills in the embedded environment. So, I created a project in which:
+1. **Cross-compilation** (both locally and via Docker) was implemented for **PC**, **ARM bare-metal** and **ARM FreeRTOS**;
+2. **Debugging** was configured in **VS Code** for **PC**, **ARM bare-metal** and **ARM FreeRTOS** using **QEMU** and **Docker**;
+3. **Github Action CI/CD** was configured for all build types, running **unit tests** and various **static analyzers**, as well as checking **code formatting**;
+4. **AI agent** integration for **code review**;
+5. **Clangd** was configured for easier coding;
+6. Scripts for automatic deployment of the development environment (**install.sh**) were implemented;
+7. Various solution options have been implemented: an **AI-generated solution**, **my solution** (supports both **dynamic memory** allocation and **static memory** allocation, which is more preferable for embedded development).
+8. **Git** development and the **branch-based approach**;
+9. A **benchmark**, which shows that the AI ​​solution is still not perfect and that a human with a good understanding of the context of the problem can write a better one because:
+    - **AI** does not allocate memory efficiently;
+    - **AI** selects a sorting algorithm that does not take into account the specific type of data (AI selects quick sort when counting sort can be used for short ASCII string);
+    - **AI** may re-sort an already sorted string;
+    - **AI** selects a hash function without considering the nature of the data;
+    - **AI** uses an unnecessary visited array in the dfs search;
 
 ## What is a Derived Anagram?
 
@@ -26,7 +35,7 @@ The program finds the **longest chain** of such derived anagrams starting from a
 
 ## The Algorithm
 
-The project implements an anagram chain finder - a word puzzle algorithm that finds chains of derived anagrams.
+See [ALGORITHM_rendered.pdf](ALGORITHM_rendered.pdf)
 
 ## Quick Start
 
@@ -285,71 +294,60 @@ make debug-baremetal   # or make debug-freertos
 gdb-multiarch -ex "target remote :1234" bin/anagram_chain_baremetal.elf
 ```
 
-## Algorithm
-
-See [docs/algorithm.md](docs/algorithm.md) for detailed algorithm documentation.
-
-### Overview
-
-1. **Load Dictionary** - Read words from file, validate ASCII (33-126)
-2. **Compute Signatures** - Sort characters of each word (e.g., "sail" → "ails")
-3. **Build Index** - Hash table mapping signatures to word indices
-4. **DFS Search** - Find all longest chains using depth-first search
-
-### Complexity
-
-| Operation | Time | Space |
-|-----------|------|-------|
-| Load & Index | O(n × m × log m) | O(n × m) |
-| Chain Search | O(chains × depth) | O(depth) |
-
-Where n = word count, m = average word length
-
 ## Project Structure
 
 ```
 .
 ├── src/
-│   ├── include/                # Public headers
-│   │   └── anagram_chain.h     # API definitions
-│   ├── impl/                   # Implementation files
-│   │   ├── ai/                 # AI-generated implementation
-│   │   │   └── anagram_chain.c # Dynamic memory only
-│   │   └── human/              # Human-optimized implementation
-│   │       ├── anagram_chain.c # Static/dynamic memory modes
-│   │       ├── config.h        # Memory pool configuration
-│   │       └── trace.h         # Debug tracing support
-│   └── main/                   # Entry points
-│       ├── main_pc.c           # PC main
-│       ├── main_arm.c          # ARM bare-metal main
-│       └── main_freertos.c     # FreeRTOS main
-├── arm/                        # ARM support files
-│   ├── startup.s               # Cortex-M3 startup code
-│   ├── linker.ld               # Linker script
-│   ├── uart.c/h                # UART driver
-│   ├── syscalls.c              # Newlib syscalls
-│   └── freertos/               # FreeRTOS configuration
-│       ├── FreeRTOSConfig.h    # FreeRTOS settings
-│       └── FreeRTOS-Kernel/    # FreeRTOS (git submodule)
-├── tests/                      # Unit tests
-│   ├── test_runner.h           # Test framework
-│   ├── test_core.c             # Test implementations
-│   ├── test_main_pc.c          # PC test runner
-│   ├── test_main_arm.c         # ARM test runner
-│   ├── test_main_freertos.c    # FreeRTOS test runner
-│   └── data/                   # Test dictionaries
-├── docker/                     # Docker configuration
-│   ├── Dockerfile              # Multi-stage build
+│   ├── include/                    # Public headers
+│   │   └── anagram_chain.h         # API definitions
+│   ├── impl/                       # Implementation files
+│   │   ├── ai/                     # AI-generated implementation
+│   │   │   └── anagram_chain.c     # Dynamic memory only
+│   │   └── human/                  # Human-optimized implementation
+│   │       ├── anagram_chain_core.c  # Core algorithm (DFS, hash table)
+│   │       ├── anagram_chain_io.c    # I/O (timer, validation, output)
+│   │       ├── assert.h            # Custom assert macros
+│   │       ├── config.h            # Memory pool configuration
+│   │       ├── global.h            # Common includes and macros
+│   │       └── trace.h             # Debug tracing support
+│   └── main/                       # Entry points
+│       ├── main_pc.c               # PC main
+│       ├── main_arm.c              # ARM bare-metal main
+│       └── main_freertos.c         # FreeRTOS main
+├── arm/                            # ARM support files
+│   ├── startup.s                   # Cortex-M3 startup code
+│   ├── linker.ld                   # Linker script
+│   ├── uart.c/h                    # UART driver
+│   ├── syscalls.c                  # Newlib syscalls
+│   └── freertos/                   # FreeRTOS configuration
+│       ├── FreeRTOSConfig.h        # FreeRTOS settings
+│       └── FreeRTOS-Kernel/        # FreeRTOS (git submodule)
+├── tests/                          # Unit tests
+│   ├── test_runner.h               # Test framework
+│   ├── test_core.c                 # Test implementations
+│   ├── test_main_pc.c              # PC test runner
+│   ├── test_main_arm.c             # ARM test runner
+│   ├── test_main_freertos.c        # FreeRTOS test runner
+│   └── data/                       # Test dictionaries
+├── docker/                         # Docker configuration
+│   ├── Dockerfile                  # Multi-stage build
 │   └── docker-compose.yml
-├── docs/                       # Documentation
-├── .github/workflows/          # CI/CD
-│   └── ci.yml                  # GitHub Actions
-├── .vscode/                    # IDE configuration
-├── Makefile                    # Build configuration
-├── install.sh                  # Setup script
-├── .clang-format               # Code formatting
-├── .clangd                     # Language server config
-└── README.md                   # This file
+├── .github/workflows/              # CI/CD
+│   └── ci.yml                      # GitHub Actions
+├── .vscode/                        # IDE configuration
+│   ├── tasks.json                  # Build tasks (9 configurations)
+│   └── launch.json                 # Debug configurations
+├── Makefile                        # Build configuration
+├── install.sh                      # Setup script
+├── benchmark.py                    # Performance comparison script
+├── ALGORITHM.md                    # Algorithm description
+├── OPTIMIZATION.md                 # Optimization details
+├── BENCHMARK.md                    # Benchmarking guide
+├── QUICK_START.md                  # Quick start guide
+├── .clang-format                   # Code formatting
+├── .clangd                         # Language server config
+└── README.md                       # This file
 ```
 
 ## Git Submodules
