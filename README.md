@@ -17,10 +17,10 @@ I understand that a simple solution algorithm was expected, but in this project 
 8. **Git** development and the **branch-based approach**;
 9. A **benchmark**, which shows that the AI ​​solution is still not perfect and that a human with a good understanding of the context of the problem can write a better one because:
     - **AI** does not allocate memory efficiently;
-    - **AI** selects a sorting algorithm that does not take into account the specific type of data (AI selects quick sort when counting sort can be used for ASCII);
+    - **AI** selects a sorting algorithm that does not take into account the specific type of data (AI selects quick sort when counting sort can be used for short ASCII string);
     - **AI** may re-sort an already sorted string;
     - **AI** selects a hash function without considering the nature of the data;
-    - **AI** uses an unnecessary visited array;
+    - **AI** uses an unnecessary visited array in the dfs search;
 
 ## What is a Derived Anagram?
 

@@ -166,7 +166,7 @@ int load_dictionary(const char *fname, Dictionary *dict)
     return -1;
 #else
     FILE *f;
-    char buf[512];
+    WordBuffer buf;
     int n;
     size_t len;
 

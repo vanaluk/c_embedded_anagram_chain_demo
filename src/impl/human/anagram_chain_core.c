@@ -117,21 +117,14 @@ static size_t insert_sorted(char *dst, const char *src, size_t len, char c)
 typedef struct
 {
     /* Bulk memory pools for words and signatures */
-    char *word_pool;
-    char *sig_pool;
-    size_t pool_size;
-    size_t word_pool_used;
-    size_t sig_pool_used;
+    MemoryPools pools;
 
-    /* Current dictionary and hashtable */
     Dictionary *dict;
     HashTable *ht;
     ChainResults *results;
 
-    /* DFS working buffers */
-    size_t *dfs_path;
-    char dfs_candidate[512];
-    char temp_sig[512];
+    DfsContext dfs;
+    size_t *dfs_path_dynamic;
 } GlobalState;
 
 static GlobalState G = {0};
@@ -170,16 +163,16 @@ static void dfs_dynamic(HashTable *ht, Dictionary *dict, size_t cur,
     /* Try adding each printable ASCII character */
     for (c = ASCII_MIN; c <= ASCII_MAX; c++)
     {
-        insert_sorted(GLOBAL.dfs_candidate, sig, sig_len, (char)c);
+        insert_sorted(GLOBAL.dfs.candidate, sig, sig_len, (char)c);
 
-        entry = hashtable_find(ht, GLOBAL.dfs_candidate);
+        entry = hashtable_find(ht, GLOBAL.dfs.candidate);
         if (entry)
         {
             for (i = 0; i < entry->word_count; i++)
             {
                 next = entry->word_indices[i];
                 found = 1;
-                GLOBAL.dfs_path[depth] = next;
+                GLOBAL.dfs_path_dynamic[depth] = next;
                 dfs_dynamic(ht, dict, next, depth + 1);
             }
         }
@@ -222,7 +215,7 @@ static void dfs_dynamic(HashTable *ht, Dictionary *dict, size_t cur,
             {
                 return;
             }
-            memcpy(indices, GLOBAL.dfs_path, depth * sizeof(size_t));
+            memcpy(indices, GLOBAL.dfs_path_dynamic, depth * sizeof(size_t));
             GLOBAL.results->chains[GLOBAL.results->count].indices = indices;
             GLOBAL.results->chains[GLOBAL.results->count].length = depth;
             GLOBAL.results->count++;
@@ -255,16 +248,16 @@ Dictionary *dictionary_create(size_t cap)
 
         /* Pre-allocate bulk pools - estimate 12 bytes per word average */
         pool_size = cap * 24;
-        GLOBAL.word_pool = malloc(pool_size);
-        GLOBAL.sig_pool = malloc(pool_size);
-        if (!GLOBAL.word_pool || !GLOBAL.sig_pool)
+        GLOBAL.pools.word_pool = malloc(pool_size);
+        GLOBAL.pools.sig_pool = malloc(pool_size);
+        if (!GLOBAL.pools.word_pool || !GLOBAL.pools.sig_pool)
         {
             break;
         }
 
-        GLOBAL.pool_size = pool_size;
-        GLOBAL.word_pool_used = 0;
-        GLOBAL.sig_pool_used = 0;
+        GLOBAL.pools.pool_size = pool_size;
+        GLOBAL.pools.word_used = 0;
+        GLOBAL.pools.sig_used = 0;
 
         dict->count = 0;
         dict->capacity = cap;
@@ -281,10 +274,10 @@ Dictionary *dictionary_create(size_t cap)
             free(dict->signatures);
             free(dict);
         }
-        free(GLOBAL.word_pool);
-        free(GLOBAL.sig_pool);
-        GLOBAL.word_pool = NULL;
-        GLOBAL.sig_pool = NULL;
+        free(GLOBAL.pools.word_pool);
+        free(GLOBAL.pools.sig_pool);
+        GLOBAL.pools.word_pool = NULL;
+        GLOBAL.pools.sig_pool = NULL;
 
         TRACE("<< dictionary_create (failed)");
 
@@ -307,13 +300,13 @@ void dictionary_free(Dictionary *dict)
     }
 
     /* Single free for each pool instead of N frees */
-    free(GLOBAL.word_pool);
-    free(GLOBAL.sig_pool);
-    GLOBAL.word_pool = NULL;
-    GLOBAL.sig_pool = NULL;
-    GLOBAL.pool_size = 0;
-    GLOBAL.word_pool_used = 0;
-    GLOBAL.sig_pool_used = 0;
+    free(GLOBAL.pools.word_pool);
+    free(GLOBAL.pools.sig_pool);
+    GLOBAL.pools.word_pool = NULL;
+    GLOBAL.pools.sig_pool = NULL;
+    GLOBAL.pools.pool_size = 0;
+    GLOBAL.pools.word_used = 0;
+    GLOBAL.pools.sig_used = 0;
 
     free(dict->words);
     free(dict->signatures);
@@ -369,17 +362,17 @@ int dictionary_add(Dictionary *dict, const char *word)
     needed = len + 1;
 
     /* Grow pools if needed */
-    if (GLOBAL.word_pool_used + needed > GLOBAL.pool_size ||
-        GLOBAL.sig_pool_used + needed > GLOBAL.pool_size)
+    if (GLOBAL.pools.word_used + needed > GLOBAL.pools.pool_size ||
+        GLOBAL.pools.sig_used + needed > GLOBAL.pools.pool_size)
     {
-        new_size = GLOBAL.pool_size * 2;
+        new_size = GLOBAL.pools.pool_size * 2;
 
         /* Save old base addresses for pointer adjustment */
-        old_word_base = (uintptr_t)GLOBAL.word_pool;
-        old_sig_base = (uintptr_t)GLOBAL.sig_pool;
+        old_word_base = (uintptr_t)GLOBAL.pools.word_pool;
+        old_sig_base = (uintptr_t)GLOBAL.pools.sig_pool;
 
-        new_word_pool = realloc(GLOBAL.word_pool, new_size);
-        new_sig_pool = realloc(GLOBAL.sig_pool, new_size);
+        new_word_pool = realloc(GLOBAL.pools.word_pool, new_size);
+        new_sig_pool = realloc(GLOBAL.pools.sig_pool, new_size);
         if (!new_word_pool || !new_sig_pool)
         {
             TRACE("<< dictionary_add (pool realloc failed)");
@@ -395,22 +388,22 @@ int dictionary_add(Dictionary *dict, const char *word)
             dict->signatures[i] += sig_delta;
         }
 
-        GLOBAL.word_pool = new_word_pool;
-        GLOBAL.sig_pool = new_sig_pool;
-        GLOBAL.pool_size = new_size;
+        GLOBAL.pools.word_pool = new_word_pool;
+        GLOBAL.pools.sig_pool = new_sig_pool;
+        GLOBAL.pools.pool_size = new_size;
     }
 
     /* Store word in pool */
-    word_ptr = GLOBAL.word_pool + GLOBAL.word_pool_used;
+    word_ptr = GLOBAL.pools.word_pool + GLOBAL.pools.word_used;
     memcpy(word_ptr, word, len + 1);
-    GLOBAL.word_pool_used += len + 1;
+    GLOBAL.pools.word_used += len + 1;
     dict->words[dict->count] = word_ptr;
 
     /* Compute and store signature in pool */
-    sig_ptr = GLOBAL.sig_pool + GLOBAL.sig_pool_used;
+    sig_ptr = GLOBAL.pools.sig_pool + GLOBAL.pools.sig_used;
     memcpy(sig_ptr, word, len + 1);
     sort_chars(sig_ptr, len);
-    GLOBAL.sig_pool_used += len + 1;
+    GLOBAL.pools.sig_used += len + 1;
     dict->signatures[dict->count] = sig_ptr;
 
     dict->count++;
@@ -700,22 +693,22 @@ ChainResults *find_longest_chains(HashTable *ht, Dictionary *dict,
         }
 
         /* Allocate path buffer - sized to max chain depth, not dict size */
-        GLOBAL.dfs_path = malloc(MAX_CHAIN_DEPTH * sizeof(size_t));
-        if (!GLOBAL.dfs_path)
+        GLOBAL.dfs_path_dynamic = malloc(MAX_CHAIN_DEPTH * sizeof(size_t));
+        if (!GLOBAL.dfs_path_dynamic)
         {
             chain_results_free(res);
             res = NULL;
             break;
         }
 
-        GLOBAL.dfs_path[0] = (size_t)idx;
+        GLOBAL.dfs_path_dynamic[0] = (size_t)idx;
 
         TRACE("   starting DFS from idx=%d", idx);
 
         dfs_dynamic(ht, dict, (size_t)idx, 1);
 
-        free(GLOBAL.dfs_path);
-        GLOBAL.dfs_path = NULL;
+        free(GLOBAL.dfs_path_dynamic);
+        GLOBAL.dfs_path_dynamic = NULL;
     } while (0);
 
     TRACE("<< find_longest_chains chains=%u max_len=%u",
@@ -737,18 +730,18 @@ char *compute_signature(const char *word)
     }
 
     len = strlen(word);
-    if (len >= sizeof(GLOBAL.temp_sig))
+    if (len >= sizeof(GLOBAL.dfs.temp_sig))
     {
         TRACE("<< compute_signature (too long)");
         return NULL;
     }
 
-    memcpy(GLOBAL.temp_sig, word, len + 1);
-    sort_chars(GLOBAL.temp_sig, len);
+    memcpy(GLOBAL.dfs.temp_sig, word, len + 1);
+    sort_chars(GLOBAL.dfs.temp_sig, len);
 
-    TRACE("<< compute_signature result=%s", GLOBAL.temp_sig);
+    TRACE("<< compute_signature result=%s", GLOBAL.dfs.temp_sig);
 
-    return GLOBAL.temp_sig;
+    return GLOBAL.dfs.temp_sig;
 }
 
 int find_word_index(Dictionary *dict, const char *word)
@@ -829,18 +822,33 @@ const char *get_word(size_t idx)
 
 typedef struct
 {
-    char signature[POOL_MAX_WORD_LEN];
+    WordBuffer signature;
     size_t word_indices[POOL_MAX_INDICES_PER_ENTRY];
     size_t word_count;
     int next_idx; /* -1 = end of chain */
     int used;
 } StaticHashEntry;
 
+/* Static chain storage with metadata */
 typedef struct
 {
-    /* Word and signature storage - fixed-size 2D arrays */
-    char words[POOL_MAX_WORDS][POOL_MAX_WORD_LEN];
-    char signatures[POOL_MAX_WORDS][POOL_MAX_WORD_LEN];
+    ChainStorage storage[POOL_MAX_CHAINS];
+    Chain api_chains[POOL_MAX_CHAINS]; /* API-compatible wrappers */
+    ChainResults results;
+    int initialized;
+} StaticChains;
+
+/* Rotating signature buffers for compute_signature */
+typedef struct
+{
+    WordBuffer buffers[SIG_BUFFER_COUNT];
+    int current_idx;
+} SigBufferPool;
+
+typedef struct
+{
+    /* Word and signature storage - combined into entries */
+    WordEntry entries[POOL_MAX_WORDS];
     size_t word_count;
 
     /* Pointer arrays for API compatibility with dynamic mode */
@@ -863,19 +871,13 @@ typedef struct
     int ht_initialized;
 
     /* Chain storage */
-    size_t chain_indices[POOL_MAX_CHAINS][POOL_MAX_CHAIN_LEN];
-    size_t chain_lengths[POOL_MAX_CHAINS];
-    Chain chains[POOL_MAX_CHAINS];
-    ChainResults chain_results;
-    int results_initialized;
+    StaticChains chains;
 
     /* DFS working buffers */
-    size_t dfs_path[MAX_CHAIN_DEPTH];
-    char dfs_candidate[POOL_MAX_WORD_LEN];
+    DfsContext dfs;
 
     /* Rotating signature buffers for compute_signature */
-    char temp_signatures[SIG_BUFFER_COUNT][POOL_MAX_WORD_LEN];
-    int temp_sig_idx;
+    SigBufferPool sig_buffers;
 } GlobalState;
 
 static GlobalState G = {0};
@@ -887,9 +889,9 @@ static void reset_all(void)
     GLOBAL.word_count = 0;
     GLOBAL.dict_initialized = 0;
     GLOBAL.ht_initialized = 0;
-    GLOBAL.results_initialized = 0;
+    GLOBAL.chains.initialized = 0;
     GLOBAL.hash_entry_count = 0;
-    GLOBAL.temp_sig_idx = 0;
+    GLOBAL.sig_buffers.current_idx = 0;
 
     memset(GLOBAL.hash_buckets, 0xFF, sizeof(GLOBAL.hash_buckets));
 }
@@ -911,7 +913,7 @@ static void dfs_static(size_t cur, size_t depth)
     ASSERT_MSG(cur < POOL_MAX_WORDS, "cur index out of bounds");
     ASSERT_MSG(depth <= MAX_CHAIN_DEPTH, "depth exceeds MAX_CHAIN_DEPTH");
 
-    sig = GLOBAL.signatures[cur];
+    sig = GLOBAL.entries[cur].signature;
     sig_len = strlen(sig);
     found = 0;
 
@@ -922,21 +924,21 @@ static void dfs_static(size_t cur, size_t depth)
 
     for (c = ASCII_MIN; c <= ASCII_MAX; c++)
     {
-        insert_sorted(GLOBAL.dfs_candidate, sig, sig_len, (char)c);
+        insert_sorted(GLOBAL.dfs.candidate, sig, sig_len, (char)c);
 
-        h = hash_fnv1a(GLOBAL.dfs_candidate) % POOL_HASH_BUCKETS;
+        h = hash_fnv1a(GLOBAL.dfs.candidate) % POOL_HASH_BUCKETS;
         idx = GLOBAL.hash_buckets[h];
 
         while (idx >= 0)
         {
             e = &GLOBAL.hash_entries[idx];
-            if (strcmp(e->signature, GLOBAL.dfs_candidate) == 0)
+            if (strcmp(e->signature, GLOBAL.dfs.candidate) == 0)
             {
                 for (i = 0; i < e->word_count; i++)
                 {
                     next = e->word_indices[i];
                     found = 1;
-                    GLOBAL.dfs_path[depth] = next;
+                    GLOBAL.dfs.path[depth] = next;
                     dfs_static(next, depth + 1);
                 }
                 break;
@@ -947,24 +949,26 @@ static void dfs_static(size_t cur, size_t depth)
 
     if (!found)
     {
-        if (depth > GLOBAL.chain_results.max_length)
+        if (depth > GLOBAL.chains.results.max_length)
         {
-            GLOBAL.chain_results.count = 0;
-            GLOBAL.chain_results.max_length = depth;
+            GLOBAL.chains.results.count = 0;
+            GLOBAL.chains.results.max_length = depth;
         }
 
-        if (depth == GLOBAL.chain_results.max_length &&
-            GLOBAL.chain_results.count < POOL_MAX_CHAINS)
+        if (depth == GLOBAL.chains.results.max_length &&
+            GLOBAL.chains.results.count < POOL_MAX_CHAINS)
         {
-            chain_idx = GLOBAL.chain_results.count;
+            chain_idx = GLOBAL.chains.results.count;
             for (i = 0; i < depth && i < POOL_MAX_CHAIN_LEN; i++)
             {
-                GLOBAL.chain_indices[chain_idx][i] = GLOBAL.dfs_path[i];
+                GLOBAL.chains.storage[chain_idx].indices[i] =
+                    GLOBAL.dfs.path[i];
             }
-            GLOBAL.chain_lengths[chain_idx] = depth;
-            GLOBAL.chains[chain_idx].indices = GLOBAL.chain_indices[chain_idx];
-            GLOBAL.chains[chain_idx].length = depth;
-            GLOBAL.chain_results.count++;
+            GLOBAL.chains.storage[chain_idx].length = depth;
+            GLOBAL.chains.api_chains[chain_idx].indices =
+                GLOBAL.chains.storage[chain_idx].indices;
+            GLOBAL.chains.api_chains[chain_idx].length = depth;
+            GLOBAL.chains.results.count++;
         }
     }
 }
@@ -982,8 +986,8 @@ Dictionary *dictionary_create(size_t cap)
         reset_all();
         for (i = 0; i < POOL_MAX_WORDS; i++)
         {
-            GLOBAL.word_ptrs[i] = GLOBAL.words[i];
-            GLOBAL.sig_ptrs[i] = GLOBAL.signatures[i];
+            GLOBAL.word_ptrs[i] = GLOBAL.entries[i].word;
+            GLOBAL.sig_ptrs[i] = GLOBAL.entries[i].signature;
         }
         GLOBAL.dictionary.words = GLOBAL.word_ptrs;
         GLOBAL.dictionary.signatures = GLOBAL.sig_ptrs;
@@ -1031,9 +1035,9 @@ int dictionary_add(Dictionary *dict, const char *word)
         return -1;
     }
 
-    memcpy(GLOBAL.words[GLOBAL.word_count], word, len + 1);
-    memcpy(GLOBAL.signatures[GLOBAL.word_count], word, len + 1);
-    sort_chars(GLOBAL.signatures[GLOBAL.word_count], len);
+    memcpy(GLOBAL.entries[GLOBAL.word_count].word, word, len + 1);
+    memcpy(GLOBAL.entries[GLOBAL.word_count].signature, word, len + 1);
+    sort_chars(GLOBAL.entries[GLOBAL.word_count].signature, len);
 
     GLOBAL.word_count++;
     GLOBAL.dictionary.count = GLOBAL.word_count;
@@ -1179,18 +1183,18 @@ ChainResults *chain_results_create(void)
 {
     TRACE(">> chain_results_create");
 
-    if (!GLOBAL.results_initialized)
+    if (!GLOBAL.chains.initialized)
     {
-        GLOBAL.chain_results.chains = GLOBAL.chains;
-        GLOBAL.chain_results.count = 0;
-        GLOBAL.chain_results.capacity = POOL_MAX_CHAINS;
-        GLOBAL.chain_results.max_length = 0;
-        GLOBAL.results_initialized = 1;
+        GLOBAL.chains.results.chains = GLOBAL.chains.api_chains;
+        GLOBAL.chains.results.count = 0;
+        GLOBAL.chains.results.capacity = POOL_MAX_CHAINS;
+        GLOBAL.chains.results.max_length = 0;
+        GLOBAL.chains.initialized = 1;
     }
 
     TRACE("<< chain_results_create");
 
-    return &GLOBAL.chain_results;
+    return &GLOBAL.chains.results;
 }
 
 void chain_results_add(ChainResults *results, size_t *path, size_t len)
@@ -1207,9 +1211,9 @@ void chain_results_free(ChainResults *results)
 
     UNUSED(results);
 
-    GLOBAL.chain_results.count = 0;
-    GLOBAL.chain_results.max_length = 0;
-    GLOBAL.results_initialized = 0;
+    GLOBAL.chains.results.count = 0;
+    GLOBAL.chains.results.max_length = 0;
+    GLOBAL.chains.initialized = 0;
 
     TRACE("<< chain_results_free");
 }
@@ -1242,9 +1246,9 @@ ChainResults *find_longest_chains(HashTable *ht, Dictionary *dict,
     res->count = 0;
     res->max_length = 0;
 
-    GLOBAL.dfs_path[0] = (size_t)idx;
+    GLOBAL.dfs.path[0] = (size_t)idx;
 
-    TRACE("   starting DFS from idx=%d", idx);
+    TRACE("starting DFS from idx=%d", idx);
 
     dfs_static((size_t)idx, 1);
 
@@ -1274,8 +1278,9 @@ char *compute_signature(const char *word)
         return NULL;
     }
 
-    buf = GLOBAL.temp_signatures[GLOBAL.temp_sig_idx];
-    GLOBAL.temp_sig_idx = (GLOBAL.temp_sig_idx + 1) % SIG_BUFFER_COUNT;
+    buf = GLOBAL.sig_buffers.buffers[GLOBAL.sig_buffers.current_idx];
+    GLOBAL.sig_buffers.current_idx =
+        (GLOBAL.sig_buffers.current_idx + 1) % SIG_BUFFER_COUNT;
     memcpy(buf, word, len + 1);
     sort_chars(buf, len);
 
@@ -1300,7 +1305,7 @@ int find_word_index(Dictionary *dict, const char *word)
 
     for (i = 0; i < GLOBAL.word_count; i++)
     {
-        if (strcmp(GLOBAL.words[i], word) == 0)
+        if (strcmp(GLOBAL.entries[i].word, word) == 0)
         {
             TRACE("<< find_word_index result=%u", (unsigned)i);
             return (int)i;
@@ -1325,7 +1330,7 @@ HashTable *build_index(Dictionary *dict)
 
     for (i = 0; i < GLOBAL.word_count; i++)
     {
-        hashtable_insert(ht, GLOBAL.signatures[i], i);
+        hashtable_insert(ht, GLOBAL.entries[i].signature, i);
     }
 
     TRACE("<< build_index entries=%u", (unsigned)GLOBAL.hash_entry_count);
@@ -1337,7 +1342,7 @@ const char *get_word(size_t idx)
 {
     if (idx < GLOBAL.word_count)
     {
-        return GLOBAL.words[idx];
+        return GLOBAL.entries[idx].word;
     }
     return "";
 }
