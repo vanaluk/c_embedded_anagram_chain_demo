@@ -160,7 +160,7 @@ static void sort_chars(char *s, size_t len)
 }
 ```
 
-### 1.3 Hash Table with Chaining
+### 1.3 Hash Table
 
 ```mermaid
 graph LR
