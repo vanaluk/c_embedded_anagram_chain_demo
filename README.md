@@ -35,7 +35,7 @@ The program finds the **longest chain** of such derived anagrams starting from a
 
 ## The Algorithm
 
-See [ALGORITHM.md](ALGORITHM.md)
+See [ALGORITHM_rendered.pdf](ALGORITHM_rendered.pdf)
 
 ## Quick Start
 
