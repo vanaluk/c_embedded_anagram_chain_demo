@@ -302,6 +302,19 @@ typedef struct {
 
 ---
 
+## Complexity
+
+| Operation | Complexity | Notes |
+|-----------|------------|-------|
+| Load dictionary | O(N × L) | N words, L = avg word length |
+| Compute signature | O(L + 127) | Counting sort |
+| Build hash table | O(N) | N inserts at O(1) |
+| Hash table lookup | O(1) | Amortized |
+| DFS worst case | O(94^D) | D = max chain depth, 94 = printable ASCII chars |
+| DFS typical | O(K × D) | K = avg transitions per level |
+
+---
+
 ## Implementation Files
 
 | File | Purpose |
